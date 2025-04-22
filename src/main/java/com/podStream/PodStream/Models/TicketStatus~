@@ -1,0 +1,12 @@
+package com.podStream.PodStream.Models;
+
+
+public enumTicketStatus {
+
+    OPEN("Open"),
+    IN_PROGRESS("In Progress"),
+    RESOLVED("Resolved"),
+    CLOSED("Closed");
+
+
+}

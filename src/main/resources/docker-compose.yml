@@ -1,0 +1,73 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/podstream
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_PROFILES_ACTIVE=prod
+      - MAIL_USERNAME=podstreamstore@gmail.com
+      - MAIL_PASSWORD=sjmt pdzc vset nrjh
+      - JIRA_URL=https://podstreamstore.atlassian.net/
+      - JIRA_USERNAME=podstreamstore@gmail.com
+      - JIRA_API_TOKEN=ATATT3xFfGF0Yjijr4Ze4XXzfRIny1b-fWFWVt5WaTWqgU5C3hwyV2l7hQRRj6ZKAi0sBAUfFJGIZkgmrfhqmTXPBeSqgIN1hPRK4VxlM2IcTwOTvdUS4QXeCkvgx0997Dzx2zES_vHoNxsIa5pCOZyjo9tCAJloD-51X9Nw7dxRiXJxtUftQ3U=19CA6D19
+      - JIRA_PROJECT_KEY=POD
+    volumes:
+      - ./logs:/var/log
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+      - elk-network
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=tu_contraseña_segura
+      - MYSQL_DATABASE=podstream
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+  elasticsearch:
+    image: elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    networks:
+      - elk-network
+  logstash:
+    image: logstash:8.8.0
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logs:/var/log
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk-network
+  kibana:
+    image: kibana:8.8.0
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - elk-network
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
+  elk-network:
+    driver: bridge

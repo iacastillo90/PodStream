@@ -1,0 +1,28 @@
+package com.podStream.PodStream.Models;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+@Entity
+public class TicketHistory {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private MonitoringTicket monitoringTicket;
+
+    @Enumerated(EnumType.STRING)
+    private TicketStatus oldStatus;
+
+    @Enumerated(EnumType.STRING)
+    private TicketStatus newStatus;
+
+    private LocalDateTime changedAt = LocalDateTime.now();
+    private String changedBy;
+
+
+}

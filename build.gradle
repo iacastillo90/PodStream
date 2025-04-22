@@ -1,0 +1,81 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.4'
+	id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.podStream'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven {
+		url 'https://packages.atlassian.com/maven-public/'
+	}
+}
+
+dependencies {
+
+	// Dependencias Web y seguridad
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test' // Librerías de testing
+	testImplementation 'org.springframework.security:spring-security-test' // Librerías de testing de seguridad
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // Launcher de JUnit
+	testImplementation 'com.h2database:h2' // Base de datos H2 para testing
+
+	// Dependencias de JPA y base de datos
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-rest' // Repositorios expuestos como API REST
+	runtimeOnly 'mysql:mysql-connector-java:8.0.33' // Conector MySQL
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok' // Lombok para simplificar código
+	annotationProcessor 'org.projectlombok:lombok' // Procesador de anotaciones de Lombok
+
+	// JJWT (para autenticación y tokens JWT)
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // API de JWT
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5' // Implementación de JWT
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // Integración con Jackson para JWT
+
+	//Monitoreo
+	implementation 'org.springframework.boot:spring-boot-starter-actuator' // Actuator
+	implementation 'io.micrometer:micrometer-registry-prometheus' // Micrometer para Prometheus
+	implementation 'io.micrometer:micrometer-core' // Micrometer
+	implementation 'com.atlassian.jira:jira-rest-java-client-core:5.2.6'
+	implementation 'com.atlassian.jira:jira-rest-java-client-api:5.2.6'
+
+	// Spring Boot Admin
+	implementation 'de.codecentric:spring-boot-admin-starter-client:3.3.3'
+
+	// Mail
+	implementation 'org.springframework.boot:spring-boot-starter-mail' // Starter para enviar correos electrónicos
+
+	// Documentacion
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+	// PDF
+	implementation 'com.itextpdf:itext7-core:7.2.5'
+
+	// Validación
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// LogBack
+	implementation 'ch.qos.logback:logback-classic:1.4.14' // LogBack para logging
+	implementation 'net.logstash.logback:logstash-logback-encoder:7.4' // LogBack para JSON
+
+
+
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
