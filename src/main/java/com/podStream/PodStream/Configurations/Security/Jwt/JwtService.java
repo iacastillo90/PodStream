@@ -1,4 +1,4 @@
-package com.podStream.PodStream.Auth.Jwt;
+package com.podStream.PodStream.Configurations.Security.Jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

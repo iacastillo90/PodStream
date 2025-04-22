@@ -2,7 +2,7 @@ package com.podStream.PodStream.Controllers;
 
 import com.podStream.PodStream.Models.MonitoringTicket;
 import com.podStream.PodStream.Models.TicketStatus;
-import com.podStream.PodStream.Services.TicketServiceImplement;
+import com.podStream.PodStream.Services.Implement.TicketServiceImplement;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

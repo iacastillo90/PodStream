@@ -1,6 +1,6 @@
 package com.podStream.PodStream.Configurations.Web;
 
-import com.podStream.PodStream.Configurations.Auth.JwtAuthenticationFilter;
+import com.podStream.PodStream.Configurations.Security.Jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

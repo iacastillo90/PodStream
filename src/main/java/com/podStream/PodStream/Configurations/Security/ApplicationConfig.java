@@ -1,4 +1,4 @@
-package com.podStream.PodStream.Configurations;
+package com.podStream.PodStream.Configurations.Security;
 
 import com.podStream.PodStream.Models.User.UserRepository;
 import lombok.RequiredArgsConstructor;

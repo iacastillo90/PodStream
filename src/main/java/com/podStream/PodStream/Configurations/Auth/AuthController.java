@@ -1,6 +1,5 @@
-package com.podStream.PodStream.Configurations.Auth.Controller;
+package com.podStream.PodStream.Configurations.Auth;
 
-import com.podStream.PodStream.Configurations.Auth.Service.AuthService;
 import com.podStream.PodStream.Models.Request.LoginRequest;
 import com.podStream.PodStream.Models.Request.RegisterRequest;
 import com.podStream.PodStream.Models.Response.AuthResponse;

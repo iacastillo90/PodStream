@@ -1,4 +1,4 @@
-package com.podStream.PodStream.Configurations;
+package com.podStream.PodStream.Configurations.Security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
