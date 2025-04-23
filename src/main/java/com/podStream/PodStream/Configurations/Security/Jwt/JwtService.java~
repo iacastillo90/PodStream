@@ -1,0 +1,108 @@
+package com.podStream.PodStream.Configurations.Security.Jwt;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+@Service
+public class JwtService {
+
+    private final String secretKey;
+    private final long expirationTime;
+    private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
+
+    public JwtService(
+            @Value("${jwt.secret}") String secretKey,
+            @Value("${jwt.expiration:86400000}") long expirationTime
+    ) {
+        if (secretKey == null || secretKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("JWT secret key must not be null or empty");
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secretKey);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("JWT secret key must be a valid Base64-encoded string");
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalArgumentException("JWT secret key must be at least 32 bytes (256 bits) for HS256");
+        }
+        this.secretKey = secretKey;
+        this.expirationTime = expirationTime;
+    }
+
+    public String getToken(UserDetails user) {
+        logger.debug("Generating token for user: {}", user.getUsername());
+        return getToken(new HashMap<>(), user);
+    }
+
+    private String getToken(Map<String,Object> extraClaims, UserDetails user) {
+        return Jwts
+            .builder()
+            .setClaims(extraClaims)
+            .setSubject(user.getUsername())
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis()+expirationTime))
+            .signWith(getKey(), SignatureAlgorithm.HS256)
+            .compact();
+    }
+
+    private Key getKey() {
+       byte[] keyBytes=Decoders.BASE64.decode(secretKey);
+       return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String getUsernameFromToken(String token) {
+        return getClaim(token, Claims::getSubject);
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username=getUsernameFromToken(token);
+        return (username.equals(userDetails.getUsername())&& !isTokenExpired(token));
+    }
+
+    private Claims getAllClaims(String token) {
+        try {
+            return Jwts
+                    .parserBuilder()
+                    .setSigningKey(getKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (JwtException e) {
+            logger.warn("Invalid JWT token: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid JWT token: " + e.getMessage());
+        }
+    }
+
+    public <T> T getClaim(String token, Function<Claims,T> claimsResolver)
+    {
+        final Claims claims=getAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Date getExpiration(String token)
+    {
+        return getClaim(token, Claims::getExpiration);
+    }
+
+    private boolean isTokenExpired(String token)
+    {
+        return getExpiration(token).before(new Date());
+    }
+    
+}

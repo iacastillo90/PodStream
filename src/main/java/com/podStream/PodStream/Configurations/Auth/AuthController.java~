@@ -8,8 +8,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     /**
      * Autentica a un usuario y genera un token JWT.
@@ -61,9 +57,6 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid request data or duplicate username/email")
     })
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        logger.info("Received registration request for username: {}", request.getUsername());
-        AuthResponse response = authService.register(request);
-        logger.info("Registration response sent for username: {}", request.getUsername());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.register(request));
     }
 }

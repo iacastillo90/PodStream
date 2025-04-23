@@ -38,13 +38,13 @@ public class SupportTicketServiceImplement implements SupportTicketService {
     @Autowired
     private MeterRegistry meterRegistry;
 
-    @Value("${jira.url}")
+    @Value("${JIRA_URL}")
     private String jiraUrl;
-    @Value("${jira.username}")
+    @Value("${JIRA_USERNAME}")
     private String jiraUsername;
-    @Value("${jira.api-token}")
+    @Value("${JIRA_API_TOKEN}")
     private String jiraApiToken;
-    @Value("${jira.project-key:POD}")
+    @Value("${JIRA_PROJECT_KEY:POD}")
     private String jiraProjectKey;
 
     private static final Logger logger = LoggerFactory.getLogger(SupportTicketServiceImplement.class);

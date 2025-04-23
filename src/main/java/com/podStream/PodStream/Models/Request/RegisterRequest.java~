@@ -25,6 +25,5 @@ public class RegisterRequest {
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     String email;
-    @NotBlank(message = "Country is required")
     String country; 
 }

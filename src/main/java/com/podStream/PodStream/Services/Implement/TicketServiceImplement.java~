@@ -37,13 +37,13 @@ public class TicketServiceImplement implements TicketService {
     @Autowired
     private MeterRegistry meterRegistry;  // Inyecta MeterRegistry
 
-    @Value("${JIRA_URL}")
+    @Value("${jira.url}")
     private String jiraUrl;
-    @Value("${JIRA_USERNAME}")
+    @Value("${jira.username}")
     private String jiraUsername;
-    @Value("${JIRA_API_TOKEN}")
+    @Value("${jira.api-token}")
     private String jiraApiToken;
-    @Value("${JIRA_PROJECT_KEY:POD}")
+    @Value("${jira.project-key:POD}")
     private String jiraProjectKey;
 
     private static final Logger logger = LoggerFactory.getLogger(TicketServiceImplement.class);
