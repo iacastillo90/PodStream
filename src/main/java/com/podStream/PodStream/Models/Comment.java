@@ -1,5 +1,6 @@
 package com.podStream.PodStream.Models;
 
+import com.podStream.PodStream.Models.User.Client;
 import com.podStream.PodStream.Models.User.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -42,7 +43,7 @@ public class Comment {
      * Persona que realizó el comentario.
      */
     @ManyToOne(fetch = FetchType.EAGER)
-    private User person;
+    private Client client;
 
     /**
      * Producto sobre el cual se realizó el comentario.
@@ -67,15 +68,15 @@ public class Comment {
      * @param body Cuerpo del comentario.
      * @param date Fecha en que se realizó el comentario.
      * @param answers Conjunto de respuestas asociadas.
-     * @param person Persona que realizó el comentario.
+     * @param client Persona que realizó el comentario.
      * @param product Producto al que pertenece el comentario.
      * @param active Estado del comentario (activo/inactivo).
      */
-    public Comment(String body, LocalDateTime date, Set<Answers> answers, User person, Product product, boolean active) {
+    public Comment(String body, LocalDateTime date, Set<Answers> answers, Client client, Product product, boolean active) {
         this.body = body;
         this.date = date;
         this.answers = answers;
-        this.person = person;
+        this.client = client;
         this.product = product;
         this.active = active;
     }
@@ -159,17 +160,17 @@ public class Comment {
      *
      * @return Persona que realizó el comentario.
      */
-    public User getPerson() {
-        return person;
+    public Client getClient() {
+        return client;
     }
 
     /**
      * Establece la persona que realizó el comentario.
      *
-     * @param person Persona que realizó el comentario.
+     * @param client Persona que realizó el comentario.
      */
-    public void setPerson(User person) {
-        this.person = person;
+    public void setClient(Client client) {
+        this.client = client;
     }
 
     /**

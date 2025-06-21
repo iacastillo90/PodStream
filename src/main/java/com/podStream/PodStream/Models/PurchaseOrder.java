@@ -1,6 +1,7 @@
 package com.podStream.PodStream.Models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.podStream.PodStream.Models.User.Client;
 import com.podStream.PodStream.Models.User.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -62,9 +63,9 @@ public class PurchaseOrder {
      */
     @NotNull(message = "El usuario no puede ser nulo")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_user")
-    @JsonBackReference(value = "user-purchaseOrder") // Nombre único para la relación
-    private User person;
+    @JoinColumn(name = "id_client")
+    @JsonBackReference(value = "client-purchaseOrder") // Nombre único para la relación
+    private Client client;
 
     /**
      * RUT del cliente para fines fiscales (SII).
@@ -105,16 +106,16 @@ public class PurchaseOrder {
      * @param date Fecha y hora de la orden.
      * @param paymentMethod Método de pago utilizado.
      * @param address Dirección de envío.
-     * @param person Persona que realizó la compra.
+     * @param client Persona que realizó la compra.
      * @param customerRut RUT del cliente.
      */
-    public PurchaseOrder(String ticket, double amount, LocalDateTime date, PaymentMethod paymentMethod, Address address, User person, String customerRut) {
+    public PurchaseOrder(String ticket, double amount, LocalDateTime date, PaymentMethod paymentMethod, Address address, Client client, String customerRut) {
         this.ticket = ticket;
         this.amount = amount;
         this.date = date;
         this.paymentMethod = paymentMethod;
         this.address = address;
-        this.person = person;
+        this.client = client;
         this.customerRut = customerRut;
     }
 
@@ -168,12 +169,12 @@ public class PurchaseOrder {
         this.address = adress;
     }
 
-    public User getPerson() {
-        return person;
+    public Client getClient() {
+        return client;
     }
 
-    public void setPerson(User person) {
-        this.person = person;
+    public void setClient(Client client) {
+        this.client = client;
     }
 
     public String getCustomerRut() {

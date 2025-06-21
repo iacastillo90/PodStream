@@ -5,12 +5,11 @@ import com.podStream.PodStream.Models.Address;
 import com.podStream.PodStream.Models.Comment;
 import com.podStream.PodStream.Models.PurchaseOrder;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.*;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

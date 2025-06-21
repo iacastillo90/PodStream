@@ -8,7 +8,7 @@ import com.itextpdf.layout.element.Table;
 
 import com.podStream.PodStream.Models.Details;
 import com.podStream.PodStream.Models.PurchaseOrder;
-import com.podStream.PodStream.Models.User.User;
+import com.podStream.PodStream.Models.User.Client;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -29,7 +29,7 @@ public class PDFService {
      */
     public byte[] generateInvoice(PurchaseOrder order) {
         // Validaciones básicas
-        if (order.getPerson() == null || order.getAddress() == null || order.getCustomerRut() == null || order.getTicket() == null) {
+        if (order.getClient() == null || order.getAddress() == null || order.getCustomerRut() == null || order.getTicket() == null) {
             throw new IllegalArgumentException("La orden debe tener un cliente, dirección, RUT y ticket válidos");
         }
 
@@ -52,9 +52,9 @@ public class PDFService {
         document.add(new Paragraph("Fecha: " + order.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
         document.add(new Paragraph("RUT Cliente: " + order.getCustomerRut()));
 
-        // Nombre del cliente (usando User)
-        User user = order.getPerson();
-        String fullName = user.getFirstname() + " " + user.getLastname();
+        // Nombre del cliente
+        Client client = order.getClient();
+        String fullName = client.getFirstname() + " " + client.getLastname();
         document.add(new Paragraph("Cliente: " + fullName));
 
         // Dirección (usando Address de PurchaseOrder)
