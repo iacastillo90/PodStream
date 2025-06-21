@@ -63,8 +63,8 @@ public class Address {
      * Relación con la entidad Person.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "person_id")
-    @JsonBackReference(value = "user-address") // Ignorar este lado de la relación
+    @JoinColumn(name = "client_id")
+    @JsonBackReference(value = "client-address") // Ignorar este lado de la relación
     private User person;
 
     /**
