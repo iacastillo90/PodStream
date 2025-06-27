@@ -86,4 +86,19 @@ public class GlobalExceptionHandler {
         logger.warn("Validation error: {}", errorMessage.toString());
         return new ResponseEntity<>(ApiResponse.error(errorMessage.toString()), HttpStatus.BAD_REQUEST);
     }
+
+
+    /**
+     * Maneja excepciones específicas de actualización de calificación.
+     *
+     * @param ex La excepción RatingUpdateException lanzada.
+     * @return ResponseEntity con un ApiResponse que contiene el mensaje de error y estado INTERNAL_SERVER_ERROR.
+     */
+    @ExceptionHandler(RatingUpdateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRatingUpdateException(RatingUpdateException ex) {
+        logger.error("Error en actualización de calificación: {}", ex.getMessage(), ex);
+        return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
 }

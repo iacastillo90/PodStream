@@ -2,7 +2,8 @@ package com.podStream.PodStream.Services.Implement;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.podStream.PodStream.Models.SupportTicket;
-import com.podStream.PodStream.Models.User.User;
+import com.podStream.PodStream.Models.User.Client;
+import com.podStream.PodStream.Models.User.Person;
 import com.podStream.PodStream.Repositories.SupportTicketRepository;
 import com.podStream.PodStream.Services.SupportTicketService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -53,8 +54,8 @@ public class SupportTicketServiceImplement implements SupportTicketService {
 
     public SupportTicket createSupportTicket(SupportTicket ticket) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof User) {
-            ticket.setCreatedBy((User) authentication.getPrincipal());
+        if (authentication != null && authentication.getPrincipal() instanceof Person) {
+            ticket.setCreatedBy((Client) authentication.getPrincipal());
         }
 
         SupportTicket savedTicket = supportTicketRepository.save(ticket);

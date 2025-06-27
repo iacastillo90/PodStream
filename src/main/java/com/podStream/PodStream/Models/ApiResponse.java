@@ -23,7 +23,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, data, LocalDateTime.now());
     }
 
-    public static ApiResponse<Void> error(String message) {
+    public static <T> ApiResponse<T> error(String message) {
         return new ApiResponse<>(false, message, null, LocalDateTime.now());
     }
 }

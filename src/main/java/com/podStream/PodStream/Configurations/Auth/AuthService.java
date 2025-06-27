@@ -5,8 +5,8 @@ import com.podStream.PodStream.Models.Request.LoginRequest;
 import com.podStream.PodStream.Models.Request.RegisterRequest;
 import com.podStream.PodStream.Models.Response.AuthResponse;
 import com.podStream.PodStream.Models.User.Role;
-import com.podStream.PodStream.Models.User.User;
-import com.podStream.PodStream.Models.User.UserRepository;
+import com.podStream.PodStream.Models.User.Person;
+import com.podStream.PodStream.Repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,20 +79,19 @@ public class AuthService {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        User user = User.builder()
+        Person person = Person.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
-                .country(request.getCountry())
                 .email(request.getEmail())
                 .role(Role.USER)
                 .build();
 
-        userRepository.save(user);
+        userRepository.save(person);
 
         return AuthResponse.builder()
-                .token(jwtService.getToken(user))
+                .token(jwtService.getToken(person))
                 .build();
     }
 }

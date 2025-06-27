@@ -1,6 +1,6 @@
 package com.podStream.PodStream.Models;
 
-import com.podStream.PodStream.Models.User.User;
+import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import java.time.LocalDateTime;
@@ -35,13 +35,15 @@ public class Answers {
      * Relación con el comentario original.
      */
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn (name = "comment_id")
     private Comment comment;
 
     /**
      * Persona que realizó la respuesta.
      */
     @ManyToOne(fetch = FetchType.EAGER)
-    private User person;
+    @JoinColumn (name = "client_id")
+    private Client client;
 
     /**
      * Fecha y hora de la respuesta.
@@ -66,16 +68,16 @@ public class Answers {
      * @param body Contenido de la respuesta.
      * @param userName Nombre de usuario que hizo la respuesta.
      * @param comment Comentario original asociado a la respuesta.
-     * @param person Persona que realizó la respuesta.
+     * @param client Persona que realizó la respuesta.
      * @param date Fecha y hora en que se realizó la respuesta.
      * @param active Indica si la respuesta está activa.
      */
-    public Answers(long id, String body, String userName, Comment comment, User person, LocalDateTime date, boolean active) {
+    public Answers(long id, String body, String userName, Comment comment, Client client, LocalDateTime date, boolean active) {
         this.id = id;
         this.body = body;
         this.userName = userName;
         this.comment = comment;
-        this.person = person;
+        this.client = client;
         this.date = date;
         this.active = active;
     }
@@ -159,17 +161,17 @@ public class Answers {
      *
      * @return Persona que hizo la respuesta.
      */
-    public User getPerson() {
-        return person;
+    public Client getClient() {
+        return client;
     }
 
     /**
      * Establece la persona que realizó la respuesta.
      *
-     * @param person Persona que hizo la respuesta.
+     * @param client Persona que hizo la respuesta.
      */
-    public void setPerson(User person) {
-        this.person = person;
+    public void setClient(Client client) {
+        this.client = client;
     }
 
     /**

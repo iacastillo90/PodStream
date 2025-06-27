@@ -1,0 +1,53 @@
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :resolveMainClassName
+
+> Task :bootRun
+01:22:08,542 |-INFO in ch.qos.logback.core.model.processor.StatusListenerModelHandler - Added status listener of type [ch.qos.logback.core.status.OnConsoleStatusListener]
+01:22:08,560 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - Processing appender named [FILE]
+01:22:08,560 |-INFO in ch.qos.logback.core.model.processor.AppenderModelHandler - About to instantiate appender of type [ch.qos.logback.core.FileAppender]
+01:22:08,641 |-INFO in ch.qos.logback.core.model.processor.ImplicitModelHandler - Assuming default type [net.logstash.logback.fieldnames.LogstashFieldNames] for [fieldNames] property
+01:22:09,761 |-INFO in ch.qos.logback.core.FileAppender[FILE] - File property is set to [C:/podstream/logs/podstream.log]
+01:22:09,763 |-INFO in ch.qos.logback.classic.model.processor.RootLoggerModelHandler - Setting level of ROOT logger to INFO
+01:22:09,765 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating INFO level on Logger[ROOT] onto the JUL framework
+01:22:09,767 |-INFO in ch.qos.logback.core.model.processor.AppenderRefModelHandler - Attaching appender named [FILE] to Logger[ROOT]
+01:22:09,767 |-INFO in ch.qos.logback.core.model.processor.DefaultProcessor@599f571f - End of configuration.
+01:22:09,767 |-INFO in org.springframework.boot.logging.logback.SpringBootJoranConfigurator@3fbfa96 - Registering current configuration as safe fallback point
+01:22:09,774 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.jdbc.core] onto the JUL framework
+01:22:09,774 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.hibernate.SQL] onto the JUL framework
+01:22:09,774 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.jooq.tools.LoggerListener] onto the JUL framework
+01:22:09,774 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.core.codec] onto the JUL framework
+01:22:09,776 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.http] onto the JUL framework
+01:22:09,776 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.web] onto the JUL framework
+01:22:09,776 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.boot.actuate.endpoint.web] onto the JUL framework
+01:22:09,776 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.boot.web.servlet.ServletContextInitializerBeans] onto the JUL framework
+01:22:09,777 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.boot] onto the JUL framework
+01:22:09,823 |-INFO in ch.qos.logback.classic.jul.LevelChangePropagator@6f6962ba - Propagating DEBUG level on Logger[org.springframework.security] onto the JUL framework
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+
+> Task :bootRun FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':bootRun'.
+> Process 'command 'C:\Program Files\Java\jdk-17\bin\java.exe'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 21s
+4 actionable tasks: 2 executed, 2 up-to-date

@@ -1,22 +1,19 @@
 package com.podStream.PodStream.Models.User;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.podStream.PodStream.Models.Address;
-import com.podStream.PodStream.Models.Comment;
-import com.podStream.PodStream.Models.PurchaseOrder;
+import com.podStream.PodStream.Models.*;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.*;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "client")
-public class Client extends User {
+@DiscriminatorValue("CLIENT")
+public class Client extends Person {
 
     /**
      * Número de teléfono de la persona.
@@ -33,10 +30,23 @@ public class Client extends User {
     private Set<Address> addresses = new HashSet<>();
 
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    private List<Answers> answers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     @JsonManagedReference(value = "client-purchaseOrder")
     private Set<PurchaseOrder> purchaseOrders = new HashSet<>();
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    private Set<ClientInteraction> interactions = new HashSet<>();
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
+    private Set<ProductRating> productRatings = new HashSet<>();
+
+    @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    private Set<SupportTicket> supportTickets = new HashSet<>();
+
 }
 

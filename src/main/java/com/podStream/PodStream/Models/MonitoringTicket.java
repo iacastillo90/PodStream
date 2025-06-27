@@ -3,15 +3,18 @@ package com.podStream.PodStream.Models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 public class MonitoringTicket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
+    @GenericGenerator(name = "native", strategy = "native")
     private Long id;
 
     @NotBlank(message = "El título no puede estar vacío")
@@ -25,17 +28,14 @@ public class MonitoringTicket {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "monitoringTicket", cascade = CascadeType.ALL)
-    private List<TicketHistory> history;
+    @OneToMany(mappedBy = "monitoringTicket", fetch = FetchType.LAZY)
+    private List<TicketHistory> history = new ArrayList<>();
 
     // Campos adicionales para monitoreo
     private String source; // Por ejemplo, "Prometheus", "Logstash", "Application"
     private String errorCode; // Código de error, si aplica
     private String severity; // "LOW", "MEDIUM", "HIGH"
 
-
-
-    // Getters y Setters
     public Long getId() {
         return id;
     }
@@ -80,44 +80,8 @@ public class MonitoringTicket {
         return history;
     }
 
-
-    public void addHistory(TicketHistory ticketHistory) {
-        this.history.add(ticketHistory);
-        ticketHistory.setMonitoringTicket(this);
-    }
-
-    public void setHistory(List<TicketHistory> history, MonitoringTicket monitoringTicket) {
-        this.history = history;
-        for (TicketHistory ticketHistory : history) {
-            ticketHistory.setMonitoringTicket(monitoringTicket);
-        }
-    }
     public void setHistory(List<TicketHistory> history) {
         this.history = history;
-        for (TicketHistory ticketHistory : history) {
-            ticketHistory.setMonitoringTicket(this);
-        }
-    }
-    public void removeHistory(TicketHistory ticketHistory) {
-        this.history.remove(ticketHistory);
-        ticketHistory.setMonitoringTicket(null);
-    }
-
-    public void clearHistory() {
-        for (TicketHistory ticketHistory : history) {
-            ticketHistory.setMonitoringTicket(null);
-        }
-        history.clear();
-    }
-    @Override
-    public String toString() {
-        return "Ticket{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", ticketStatus=" + ticketStatus +
-                ", createdAt=" + createdAt +
-                '}';
     }
 
     public String getSource() {

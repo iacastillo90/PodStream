@@ -1,16 +1,19 @@
 package com.podStream.PodStream.Models;
 
-import com.podStream.PodStream.Models.User.User;
+import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 public class SupportTicket {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
+    @GenericGenerator(name = "native", strategy = "native")
     private Long id;
 
     @NotBlank(message = "El título no puede estar vacío")
@@ -23,8 +26,8 @@ public class SupportTicket {
     private OrderStatus orderStatus = OrderStatus.PROCESSING;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy; // El usuario que creó el ticket de soporte
+    @JoinColumn(name = "created_by_id")
+    private Client createdBy; // El usuario que creó el ticket de soporte
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "purchase_order_id")
@@ -69,11 +72,11 @@ public class SupportTicket {
         this.orderStatus = orderStatus;
     }
 
-    public User getCreatedBy() {
+    public Client getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(User createdBy) {
+    public void setCreatedBy(Client createdBy) {
         this.createdBy = createdBy;
     }
 

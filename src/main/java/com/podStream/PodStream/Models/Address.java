@@ -2,7 +2,8 @@ package com.podStream.PodStream.Models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.podStream.PodStream.Models.User.User;
+import com.podStream.PodStream.Models.User.Client;
+import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 
@@ -65,7 +66,7 @@ public class Address {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id")
     @JsonBackReference(value = "client-address") // Ignorar este lado de la relación
-    private User person;
+    private Client client;
 
     /**
      * Relación uno a uno con la orden de compra (PurchaseOrder).
@@ -90,9 +91,9 @@ public class Address {
      * @param floor Piso, si aplica.
      * @param status Estado de la dirección (activa/inactiva).
      * @param zipCode Código postal.
-     * @param person Persona asociada a la dirección.
+     * @param client Persona asociada a la dirección.
      */
-    public Address(String street, long number, String city, String apartament, long floor, boolean status, String zipCode, User person) {
+    public Address(String street, long number, String city, String apartament, long floor, boolean status, String zipCode, Client client) {
         this.street = street;
         this.number = number;
         this.city = city;
@@ -100,7 +101,7 @@ public class Address {
         this.floor = floor;
         this.status = status;
         this.zipCode = zipCode;
-        this.person = person;
+        this.client = client;
     }
 
     // Getters y Setters con Javadoc
@@ -254,17 +255,17 @@ public class Address {
      *
      * @return Persona asociada a la dirección.
      */
-    public User getPerson() {
-        return person;
+    public Client getClient() {
+        return client;
     }
 
     /**
      * Establece la persona asociada a la dirección.
      *
-     * @param person Persona asociada a la dirección.
+     * @param client Persona asociada a la dirección.
      */
-    public void setPerson(User person) {
-        this.person = person;
+    public void setClient(Client client) {
+        this.client = client;
     }
 
     /**

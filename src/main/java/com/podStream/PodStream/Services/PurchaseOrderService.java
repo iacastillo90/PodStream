@@ -3,7 +3,7 @@ package com.podStream.PodStream.Services;
 import com.podStream.PodStream.Models.OrderStatus;
 import com.podStream.PodStream.Models.OrderStatusHistory;
 import com.podStream.PodStream.Models.PurchaseOrder;
-import com.podStream.PodStream.Models.User.User;
+import com.podStream.PodStream.Models.User.Client;
 import com.podStream.PodStream.Repositories.PurchaseOrderRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.mail.MessagingException;
@@ -32,11 +32,11 @@ public class PurchaseOrderService {
 
     public PurchaseOrder createPurchaseOrder(PurchaseOrder order) {
         // Obtener el usuario autenticado desde el contexto de seguridad
-        User authenticatedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Client authenticatedUser = (Client) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (authenticatedUser == null) {
             throw new RuntimeException("No se encontró un usuario autenticado");
         }
-        order.setPerson(authenticatedUser);
+        order.setClient(authenticatedUser);
 
         // Establecer estado inicial y registrar en el historial
         order.setStatus(OrderStatus.PENDING_PAYMENT);
@@ -90,7 +90,7 @@ public class PurchaseOrderService {
         MimeMessage message = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            String email = order.getPerson().getEmail();
+            String email = order.getClient().getEmail();
             if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
                 logger.warn("El correo del cliente es inválido o está vacío para la orden #{}", order.getId());
                 throw new IllegalArgumentException("El correo del cliente es inválido o está vacío");
@@ -112,7 +112,7 @@ public class PurchaseOrderService {
         MimeMessage message = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            String email = order.getPerson().getEmail();
+            String email = order.getClient().getEmail();
             if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
                 logger.warn("El correo del cliente es inválido o está vacío para la orden #{}", order.getId());
                 throw new IllegalArgumentException("El correo del cliente es inválido o está vacío");

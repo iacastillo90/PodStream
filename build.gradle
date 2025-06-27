@@ -2,10 +2,17 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.4'
 	id 'io.spring.dependency-management' version '1.1.6'
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.podStream'
 version = '0.0.1-SNAPSHOT'
+
+shadowJar {
+	archiveBaseName.set('podstream')
+	archiveClassifier.set('')
+	archiveVersion.set('1.0')
+}
 
 java {
 	toolchain {
@@ -69,10 +76,17 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	// LogBack
-	implementation 'ch.qos.logback:logback-classic:1.4.14' // LogBack para logging
+	implementation 'ch.qos.logback:logback-classic:1.5.8' // LogBack para logging
 	implementation 'net.logstash.logback:logstash-logback-encoder:7.4' // LogBack para JSON
 
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.5.3'
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.2.1'
 
+	// Spark
+	implementation 'org.apache.spark:spark-core_2.13:3.5.0'
+	implementation 'org.apache.spark:spark-sql_2.13:3.5.0'
+	implementation 'org.apache.spark:spark-mllib_2.13:3.5.0'
 
 }
 

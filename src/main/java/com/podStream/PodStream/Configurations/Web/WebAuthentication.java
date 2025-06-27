@@ -1,6 +1,6 @@
 package com.podStream.PodStream.Configurations.Web;
 
-import com.podStream.PodStream.Models.User.UserRepository;
+import com.podStream.PodStream.Repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;

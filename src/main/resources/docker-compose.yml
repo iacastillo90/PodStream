@@ -15,10 +15,13 @@ services:
       - JIRA_USERNAME=podstreamstore@gmail.com
       - JIRA_API_TOKEN=ATATT3xFfGF0Yjijr4Ze4XXzfRIny1b-fWFWVt5WaTWqgU5C3hwyV2l7hQRRj6ZKAi0sBAUfFJGIZkgmrfhqmTXPBeSqgIN1hPRK4VxlM2IcTwOTvdUS4QXeCkvgx0997Dzx2zES_vHoNxsIa5pCOZyjo9tCAJloD-51X9Nw7dxRiXJxtUftQ3U=19CA6D19
       - JIRA_PROJECT_KEY=POD
+      - SPRING_REDIS_HOST=redis         # La app buscará un servicio llamado 'redis' en la red de Docker
+      - SPRING_PROFILES_ACTIVE=prod
     volumes:
       - ./logs:/var/log
     depends_on:
       - mysql
+      - redis
     networks:
       - app-network
       - elk-network

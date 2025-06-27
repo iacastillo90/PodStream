@@ -1,7 +1,7 @@
 package com.podStream.PodStream.Models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.podStream.PodStream.Models.User.User;
+import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -64,7 +64,7 @@ public class PurchaseOrder {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_user")
     @JsonBackReference(value = "user-purchaseOrder") // Nombre único para la relación
-    private User person;
+    private Client client;
 
     /**
      * RUT del cliente para fines fiscales (SII).
@@ -83,7 +83,7 @@ public class PurchaseOrder {
      * Relación uno a muchos con los detalles de los productos comprados.
      */
     @NotEmpty(message = "La orden debe tener al menos un detalle")
-    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY)
     private Set<Details> details = new HashSet<>();
 
     /**
@@ -91,6 +91,9 @@ public class PurchaseOrder {
      */
     @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
+
+    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY)
+    private Set<SupportTicket> supportTickets = new HashSet<>();
 
     /**
      * Constructor vacío necesario para JPA.
@@ -105,16 +108,16 @@ public class PurchaseOrder {
      * @param date Fecha y hora de la orden.
      * @param paymentMethod Método de pago utilizado.
      * @param address Dirección de envío.
-     * @param person Persona que realizó la compra.
+     * @param client Persona que realizó la compra.
      * @param customerRut RUT del cliente.
      */
-    public PurchaseOrder(String ticket, double amount, LocalDateTime date, PaymentMethod paymentMethod, Address address, User person, String customerRut) {
+    public PurchaseOrder(String ticket, double amount, LocalDateTime date, PaymentMethod paymentMethod, Address address, Client client, String customerRut) {
         this.ticket = ticket;
         this.amount = amount;
         this.date = date;
         this.paymentMethod = paymentMethod;
         this.address = address;
-        this.person = person;
+        this.client = client;
         this.customerRut = customerRut;
     }
 
@@ -168,12 +171,12 @@ public class PurchaseOrder {
         this.address = adress;
     }
 
-    public User getPerson() {
-        return person;
+    public Client getClient() {
+        return client;
     }
 
-    public void setPerson(User person) {
-        this.person = person;
+    public void setClient(Client client) {
+        this.client = client;
     }
 
     public String getCustomerRut() {
