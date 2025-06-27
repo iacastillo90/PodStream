@@ -138,6 +138,9 @@ public class Product {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private Set<ProductRating> productRatings = new HashSet<>();
 
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private Set<CartItem> cartItems = new HashSet<>();
+
     /**
      * Constructor por defecto requerido por JPA.
      */
@@ -328,5 +331,21 @@ public class Product {
 
     public void setComments(List<Comment> comments) {
         this.comments = comments;
+    }
+
+    public Set<ProductRating> getProductRatings() {
+        return productRatings;
+    }
+
+    public void setProductRatings(Set<ProductRating> productRatings) {
+        this.productRatings = productRatings;
+    }
+
+    public Set<CartItem> getCartItems() {
+        return cartItems;
+    }
+
+    public void setCartItems(Set<CartItem> cartItems) {
+        this.cartItems = cartItems;
     }
 }

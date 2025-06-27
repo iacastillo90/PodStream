@@ -48,5 +48,8 @@ public class Client extends Person {
     @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
     private Set<SupportTicket> supportTickets = new HashSet<>();
 
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Cart> carts = new HashSet<>();
+
 }
 

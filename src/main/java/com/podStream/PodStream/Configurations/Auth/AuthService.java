@@ -4,9 +4,11 @@ import com.podStream.PodStream.Configurations.Security.Jwt.JwtService;
 import com.podStream.PodStream.Models.Request.LoginRequest;
 import com.podStream.PodStream.Models.Request.RegisterRequest;
 import com.podStream.PodStream.Models.Response.AuthResponse;
+import com.podStream.PodStream.Models.User.Client;
 import com.podStream.PodStream.Models.User.Role;
 import com.podStream.PodStream.Models.User.Person;
 import com.podStream.PodStream.Repositories.UserRepository;
+import com.podStream.PodStream.Services.CartService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +31,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final CartService cartService;
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     /**
@@ -39,7 +42,7 @@ public class AuthService {
      * @throws AuthenticationException Si las credenciales son inválidas o la autenticación falla.
      * @throws IllegalStateException Si el usuario no se encuentra después de la autenticación.
      */
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request,String sessionId) {
         logger.info("Login attempt for username: {}", request.getUsername());
         try {
             authenticationManager.authenticate(
@@ -53,6 +56,21 @@ public class AuthService {
                     logger.error("User not found after authentication: {}", request.getUsername());
                     return new IllegalStateException("User not found after authentication");
                 });
+
+        // Transferir el carrito de Redis a MySQL
+        if (sessionId != null && !sessionId.isEmpty()) {
+            try {
+                Client client = (Client) user;
+                cartService.mergeCartOnLogin(sessionId, client);
+                logger.info("Carrito transferido para el usuario {} con sessionId: {}", client.getId(), sessionId);
+            } catch (Exception e) {
+                logger.error("Error al transferir el carrito: {}", e.getMessage());
+                // Continuar con el login aunque falle la transferencia del carrito
+            }
+        } else {
+            logger.warn("No se proporcionó X-Session-Id en la solicitud de login");
+        }
+
         String token = jwtService.getToken(user);
         logger.info("Login successful for username: {}", request.getUsername());
         return AuthResponse.builder()

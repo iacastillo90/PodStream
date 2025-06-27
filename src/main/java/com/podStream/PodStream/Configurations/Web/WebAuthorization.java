@@ -51,6 +51,7 @@ public class WebAuthorization {
                                     .requestMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll() // Añadido para permitir el acceso a swagger
                                     .requestMatchers(HttpMethod.GET, "/v3/api-docs/**").permitAll() // Añadido para permitir el acceso a swagger
                                     .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                                    .requestMatchers("/api/cart/**").permitAll() // Permitir acceso al carrito sin autenticación
                                     .requestMatchers("/actuator/**").hasRole("ADMIN")
                                     .anyRequest().authenticated()
                     )

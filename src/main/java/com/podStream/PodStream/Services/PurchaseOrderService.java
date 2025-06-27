@@ -1,13 +1,12 @@
 package com.podStream.PodStream.Services;
 
-import com.podStream.PodStream.Models.OrderStatus;
-import com.podStream.PodStream.Models.OrderStatusHistory;
-import com.podStream.PodStream.Models.PurchaseOrder;
+import com.podStream.PodStream.Models.*;
 import com.podStream.PodStream.Models.User.Client;
 import com.podStream.PodStream.Repositories.PurchaseOrderRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,16 +16,28 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @Service
 public class PurchaseOrderService {
+
     @Autowired
     private PDFService pdfService;
+
     @Autowired
     private JavaMailSender mailSender;
+
     @Autowired
     private PurchaseOrderRepository purchaseOrderRepository;
+
     @Autowired
     private MeterRegistry meterRegistry;
+
+    @Autowired
+    private CartService cartService;
 
     private static final Logger logger = LoggerFactory.getLogger(PurchaseOrderService.class);
 
@@ -58,6 +69,68 @@ public class PurchaseOrderService {
         meterRegistry.counter("orders.created", "status", savedOrder.getStatus().toString()).increment();
 
         return savedOrder;
+    }
+
+    @Transactional
+    public PurchaseOrder createPurchaseOrderFromCart (String sessionId) {
+        Client authenticatedUser = (Client) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (authenticatedUser == null){
+            throw new RuntimeException("No se encontró un usuario autenticado");
+        }
+
+        Cart cart = cartService.getOrCreateCart(sessionId);
+        if (cart.getItems().isEmpty()) {
+            throw new RuntimeException("El carrito está vací́o");
+        }
+
+        // Crear PurchaseOrder desde Cart
+        PurchaseOrder order = new PurchaseOrder();
+        order.setClient(authenticatedUser);
+        order.setStatus(OrderStatus.PENDING_PAYMENT);
+        order.setAmount(calculateTotalAmount(cart));
+
+        // Transferir items del carrito a la orden
+        Set<Details> orderItems = new HashSet<>();
+        for (CartItem item : cart.getItems()) {
+            Details details = new Details();
+            details.setPurchaseOrder(order);
+            details.setProduct(item.getProduct());
+            details.setQuantity(item.getQuantity());
+            details.setPrice(item.getProduct().getPrice());
+            orderItems.add(details);
+        }
+        order.setDetails(orderItems);
+
+        // Establecer estado inicial
+        OrderStatusHistory initialHistory = new OrderStatusHistory();
+        initialHistory.setPurchaseOrder(order);
+        initialHistory.setNewStatus(OrderStatus.PENDING_PAYMENT);
+        initialHistory.setChangedBy("system");
+        order.getStatusHistory().add(initialHistory);
+
+        // Guardar la orden
+        PurchaseOrder savedOrder = purchaseOrderRepository.save(order);
+        logger.info("Orden de compra creada: ID={}, Estado={}", savedOrder.getId(), savedOrder.getStatus());
+
+        //Vaciar el carrito
+        cartService.clearCart(sessionId);
+
+
+        // Generar y enviar factura
+        byte[] pdfBytes = pdfService.generateInvoice(savedOrder);
+        sendInvoiceEmail(savedOrder, pdfBytes);
+
+        // Registrar métrica
+        meterRegistry.counter("orders.created", "status", savedOrder.getStatus().toString()).increment();
+
+        return savedOrder;
+
+    }
+
+    private double calculateTotalAmount(Cart cart) {
+        return cart.getItems().stream()
+                .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
+                .sum();
     }
 
     public PurchaseOrder updateOrderStatus(Long orderId, OrderStatus newStatus, String changedBy) {
