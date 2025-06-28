@@ -156,6 +156,12 @@ public class CartServiceImplement implements CartService {
 
         cartItem.setQuantity(quantity);
         product.setStock(product.getStock() - stockDifference);
+
+        if (product.getStock() < quantity) {
+            meterRegistry.counter("cart.errors", "type", "insufficient_stock").increment();
+            throw new IllegalStateException("Stock insuficiente para el producto: " + product.getName());
+        }
+        product.setStock(product.getStock() - quantity);
         productRepository.save(product);
 
         if (cart.getClient() != null) {

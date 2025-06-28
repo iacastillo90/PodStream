@@ -1,76 +1,66 @@
-version: '3.8'
 services:
-  app:
-    build: .
+  redis:
+    image: redis:7.0
+    container_name: podstream-redis
     ports:
-      - "8088:8088"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/podstream
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=
-      - SPRING_PROFILES_ACTIVE=prod
-      - MAIL_USERNAME=podstreamstore@gmail.com
-      - MAIL_PASSWORD=sjmt pdzc vset nrjh
-      - JIRA_URL=https://podstreamstore.atlassian.net/
-      - JIRA_USERNAME=podstreamstore@gmail.com
-      - JIRA_API_TOKEN=ATATT3xFfGF0Yjijr4Ze4XXzfRIny1b-fWFWVt5WaTWqgU5C3hwyV2l7hQRRj6ZKAi0sBAUfFJGIZkgmrfhqmTXPBeSqgIN1hPRK4VxlM2IcTwOTvdUS4QXeCkvgx0997Dzx2zES_vHoNxsIa5pCOZyjo9tCAJloD-51X9Nw7dxRiXJxtUftQ3U=19CA6D19
-      - JIRA_PROJECT_KEY=POD
-      - SPRING_REDIS_HOST=redis         # La app buscará un servicio llamado 'redis' en la red de Docker
-      - SPRING_PROFILES_ACTIVE=prod
-    volumes:
-      - ./logs:/var/log
-    depends_on:
-      - mysql
-      - redis
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
-      - elk-network
-  mysql:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=tu_contraseña_segura
-      - MYSQL_DATABASE=podstream
-    ports:
-      - "3306:3306"
-    networks:
-      - app-network
+
   elasticsearch:
-    image: elasticsearch:8.8.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: podstream-elasticsearch
     environment:
       - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -E '\"status\":\"(green|yellow)\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - elk-network
+
   logstash:
-    image: logstash:8.8.0
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    container_name: podstream-logstash
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
       - ./logs:/var/log
     ports:
-      - "5044:5044"
+      - "5000:5000"
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     networks:
       - elk-network
+
   kibana:
-    image: kibana:8.8.0
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: podstream-kibana
     ports:
       - "5601:5601"
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     networks:
       - elk-network
-  prometheus:
-    image: prom/prometheus:v2.45.0
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - app-network
+
 networks:
   app-network:
     driver: bridge
   elk-network:
     driver: bridge
+
+volumes:
+  es-data:

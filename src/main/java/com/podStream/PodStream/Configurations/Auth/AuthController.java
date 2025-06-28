@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Controlador para la gestión de autenticación de usuarios.
@@ -41,9 +38,10 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Authentication failed"),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
+                                              @RequestHeader(value = "X-Session-Id", required = false) String sessionId) {
         logger.info("Received login request for username: {}", request.getUsername());
-        AuthResponse response = authService.login(request);
+        AuthResponse response = authService.login(request,sessionId);
         logger.info("Login response sent for username: {}", request.getUsername());
         return ResponseEntity.ok(response);
     }

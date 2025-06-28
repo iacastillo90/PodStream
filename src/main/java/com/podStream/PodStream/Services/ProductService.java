@@ -10,5 +10,7 @@ public interface ProductService {
     Product save(Product product);
     Product update(Product product);
     void deleteById(Long id);
+    Product updateStock(Long productId, Integer newStock, String updatedBy);
+    Product getProduct(Long productId);
 
 }
