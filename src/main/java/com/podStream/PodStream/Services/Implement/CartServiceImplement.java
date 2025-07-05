@@ -3,10 +3,12 @@ package com.podStream.PodStream.Services.Implement;
 import com.podStream.PodStream.Models.Cart;
 import com.podStream.PodStream.Models.CartItem;
 import com.podStream.PodStream.Models.Product;
+import com.podStream.PodStream.Models.Promotion;
 import com.podStream.PodStream.Models.User.Client;
 import com.podStream.PodStream.Repositories.CartItemRepository;
 import com.podStream.PodStream.Repositories.CartRepository;
 import com.podStream.PodStream.Repositories.ProductRepository;
+import com.podStream.PodStream.Repositories.PromotionRepository;
 import com.podStream.PodStream.Services.CartService;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,6 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -38,6 +41,9 @@ public class CartServiceImplement implements CartService {
 
     @Autowired
     private MeterRegistry meterRegistry;
+
+    @Autowired
+    private PromotionRepository promotionRepository;
 
     private static final String CART_KEY_PREFIX = "cart:session:";
     private static final long CART_TTL_MINUTES = 60 * 24; // 24 horas
@@ -288,6 +294,23 @@ public class CartServiceImplement implements CartService {
         meterRegistry.counter("cart.merged").increment();
     }
 
+    public Cart applyPromotion(String sessionId, String promotionCode) {
+        Cart cart = getOrCreateCart(sessionId);
+        Promotion promotion = promotionRepository.findByCodeAndActiveTrue(promotionCode)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or inactive promotion code"));
+        if (promotion.getValidUntil().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Promotion code expired");
+        }
+        cart.setDiscount(promotion.getDiscountPercentage());
+        cart.setTotalPrice(calculateTotalAmount(cart) * (1 - promotion.getDiscountPercentage() / 100));
+        return cartRepository.save(cart);
+    }
+
+    private Double calculateTotalAmount(Cart cart) {
+        return cart.getItems().stream()
+                .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
+                .sum();
+    }
 
 
 }

@@ -1,9 +1,11 @@
-package com.podStream.PodStream.Configurations.Security;
+package com.podStream.PodStream.Configurations;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 
@@ -33,5 +35,13 @@ public class ApplicationConfig {
             logger.error("Error creating AuthenticationManager bean: {}", e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    @Bean
+    public MessageSource messageSource() {
+        ResourceBundleMessageSource source = new ResourceBundleMessageSource();
+        source.setBasename("messages");
+        source.setDefaultEncoding("UTF-8");
+        return source;
     }
 }

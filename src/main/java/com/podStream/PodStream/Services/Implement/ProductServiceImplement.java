@@ -1,5 +1,6 @@
 package com.podStream.PodStream.Services.Implement;
 
+import com.podStream.PodStream.Controllers.NotificationController;
 import com.podStream.PodStream.Models.Product;
 import com.podStream.PodStream.Models.ProductDocument;
 import com.podStream.PodStream.Repositories.ProductRepository;
@@ -36,6 +37,9 @@ public class ProductServiceImplement implements ProductService {
     @Autowired
     private MeterRegistry meterRegistry;
 
+    @Autowired
+    private NotificationController notificationController;
+
     @Override
     @Transactional
     public Product updateStock(Long productId, Integer newStock, String updatedBy) {
@@ -60,6 +64,9 @@ public class ProductServiceImplement implements ProductService {
         if (newStock <= 10) {
             meterRegistry.counter("inventory.low_stock", "productId", productId.toString()).increment();
         }
+
+        notificationController.notifyStockUpdate(productId, newStock);
+
         return product;
     }
 

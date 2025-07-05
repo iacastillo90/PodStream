@@ -38,15 +38,14 @@ public class ProductSearchService {
         }
     }
 
-    public List<ProductDocument> filterProducts(CategoryProduct category, Double minPrice, Double maxPrice) {
+    public List<ProductDocument> filterProducts(Long categoryId, Double minPrice, Double maxPrice) {
         try {
-            logger.info("Filtrando productos por categoría: {}, precio: {}-{}", category, minPrice, maxPrice);
-            return productSearchRepository.findByCategoryAndPriceBetween(category, minPrice, maxPrice);
+            logger.info("Filtrando productos por categoría ID: {}, precio: {}-{}", categoryId, minPrice, maxPrice);
+            return productSearchRepository.findByCategoryIdAndPriceBetween(categoryId, minPrice, maxPrice);
         } catch (Exception e) {
             logger.error("Error al filtrar en Elasticsearch, usando MySQL: {}", e.getMessage());
-            // Fallback to MySQL
             List<Product> products = productRepository.findAll().stream()
-                    .filter(p -> p.getCategory().equals(category) &&
+                    .filter(p -> p.getCategory() != null && p.getCategory().getId().equals(categoryId) &&
                             p.getPrice() >= minPrice && p.getPrice() <= maxPrice)
                     .collect(Collectors.toList());
             return products.stream().map(this::convertToDocument).collect(Collectors.toList());

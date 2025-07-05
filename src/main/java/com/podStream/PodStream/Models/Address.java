@@ -91,9 +91,8 @@ public class Address {
      * @param floor Piso, si aplica.
      * @param status Estado de la dirección (activa/inactiva).
      * @param zipCode Código postal.
-     * @param client Persona asociada a la dirección.
      */
-    public Address(String street, long number, String city, String apartament, long floor, boolean status, String zipCode, Client client) {
+    public Address(String street, long number, String city, String apartament, long floor, boolean status, String zipCode) {
         this.street = street;
         this.number = number;
         this.city = city;
@@ -101,7 +100,6 @@ public class Address {
         this.floor = floor;
         this.status = status;
         this.zipCode = zipCode;
-        this.client = client;
     }
 
     // Getters y Setters con Javadoc
@@ -285,4 +283,6 @@ public class Address {
     public void setPurchaseOrder(Set<PurchaseOrder> purchaseOrder) {
         this.purchaseOrder = purchaseOrder;
     }
+
+
 }

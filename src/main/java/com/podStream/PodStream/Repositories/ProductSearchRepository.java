@@ -11,5 +11,6 @@ import java.util.List;
 public interface ProductSearchRepository extends ElasticsearchRepository<ProductDocument, Long> {
 
     List<ProductDocument> findByNameContainingOrDescriptionContaining(String name, String description);
-    List<ProductDocument> findByCategoryAndPriceBetween(CategoryProduct category, Double minPrice, Double maxPrice);
+    
+    List<ProductDocument> findByCategoryIdAndPriceBetween(Long categoryId, Double minPrice, Double maxPrice);
 }

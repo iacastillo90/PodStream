@@ -31,15 +31,23 @@ public class Cart {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Column(name = "total_price")
+    private Double totalPrice = 0.0;
+
+    @Column(name = "Discount")
+    private Double discount = 0.0;
+
     public Cart() { }
 
-    public Cart(Long id, Client client, String sessionId, List<CartItem> items, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Cart(Long id, Client client, String sessionId, List<CartItem> items, LocalDateTime createdAt, LocalDateTime updatedAt, Double totalPrice, Double discount) {
         this.id = id;
         this.client = client;
         this.sessionId = sessionId;
         this.items = items;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.totalPrice = totalPrice;
+        this.discount = discount;
     }
 
     public Long getId() {
@@ -90,15 +98,19 @@ public class Cart {
         this.updatedAt = updatedAt;
     }
 
-    @Override
-    public String toString() {
-        return "Cart{" +
-                "id=" + id +
-                ", client=" + client +
-                ", sessionId='" + sessionId + '\'' +
-                ", items=" + items +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+    public Double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(Double totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public Double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Double discount) {
+        this.discount = discount;
     }
 }

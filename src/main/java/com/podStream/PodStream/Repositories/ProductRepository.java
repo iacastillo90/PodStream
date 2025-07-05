@@ -14,5 +14,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p ORDER BY p.salesCount DESC")
     List<Product> findTopPopularProducts(Pageable pageable);
+
+    boolean existsByCategoryId(Long categoryId);
 }
 

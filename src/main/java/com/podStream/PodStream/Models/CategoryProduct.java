@@ -1,36 +1,40 @@
 package com.podStream.PodStream.Models;
 
+import jakarta.persistence.*;
+import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
- * La enumeración CategoryProduct define las diferentes categorías de productos disponibles en la tienda.
- * Esto facilita la clasificación de los productos por tipo.
- *
- * Ejemplo de uso:
- * Product product = new Product("Micrófono", "Micrófono profesional", 150.0, 10, CategoryProduct.MICROPHONES, color, 0.0, "image.jpg");
+ * Entidad que representa una categoría de productos en la tienda PodStream.
  */
-public enum CategoryProduct {
+@Entity
+@Data
+@EntityListeners(AuditingEntityListener.class)
+public class CategoryProduct {
 
-    /**
-     * Productos relacionados con micrófonos, incluyendo micrófonos de condensador, dinámicos y accesorios.
-     */
-    MICROPHONES,
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
-    /**
-     * Productos relacionados con consolas de sonido, como mezcladoras y interfaces de audio.
-     */
-    SOUND_CONSOLES,
+    @Column(nullable = false, unique = true)
+    private String name;
 
-    /**
-     * Cámaras utilizadas para streaming y grabación de video.
-     */
-    CAMERAS,
+    @Column(length = 500)
+    private String description;
 
-    /**
-     * Tarjetas de sonido externas o internas utilizadas para mejorar la calidad de audio.
-     */
-    SOUND_CARDS,
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdDate;
 
-    /**
-     * Accesorios para grabación y streaming, como trípodes, cables y soportes.
-     */
-    ACCESSORIES
+    @LastModifiedDate
+    private LocalDateTime lastModifiedDate;
+
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    private Set<Product> products = new HashSet<>();
 }

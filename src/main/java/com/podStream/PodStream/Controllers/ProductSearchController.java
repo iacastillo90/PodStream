@@ -35,11 +35,11 @@ public class ProductSearchController {
     @GetMapping("/products/filter")
     @Operation(summary = "Filtrar productos por categoría y precio")
     public ResponseEntity<List<ProductDocument>> filterProducts(
-            @RequestParam CategoryProduct category,
+            @RequestParam Long categoryId,
             @RequestParam Double minPrice,
             @RequestParam Double maxPrice) {
         try {
-            List<ProductDocument> results = productSearchService.filterProducts(category, minPrice, maxPrice);
+            List<ProductDocument> results = productSearchService.filterProducts(categoryId, minPrice, maxPrice);
             return ResponseEntity.ok(results);
         } catch (Exception e) {
             logger.error("Error al filtrar productos: {}", e.getMessage());
