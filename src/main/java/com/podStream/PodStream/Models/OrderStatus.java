@@ -6,7 +6,12 @@ public enum OrderStatus {
     PROCESSING("Procesando"),
     SHIPPED("Enviado"),
     DELIVERED("Entregado"),
-    CANCELLED("Cancelado");
+    CANCELLED("Cancelado"),
+    COMPLETED("Completado"),
+    REFUNDED("Reembolsado"),
+    RETURNED("Devolucion"),
+    CLOSED("Cerrado");
+
 
     private final String description;
 

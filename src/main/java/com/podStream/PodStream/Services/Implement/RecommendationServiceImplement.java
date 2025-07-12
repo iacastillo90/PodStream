@@ -1,10 +1,11 @@
 package com.podStream.PodStream.Services.Implement;
 
+import com.podStream.PodStream.Configurations.PodStreamPrometheusConfig;
 import com.podStream.PodStream.DTOS.RecommendationResponseDTO;
 import com.podStream.PodStream.Models.Product;
 import com.podStream.PodStream.Models.ProductRating;
-import com.podStream.PodStream.Repositories.ProductRatingRepository;
-import com.podStream.PodStream.Repositories.ProductRepository;
+import com.podStream.PodStream.Repositories.Jpa.ProductRatingRepository;
+import com.podStream.PodStream.Repositories.Jpa.ProductRepository;
 import com.podStream.PodStream.Services.RecommendationService;
 import jakarta.annotation.PreDestroy;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,33 +22,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
  * Implementación del servicio de recomendaciones para PodStream.
- * Utiliza Apache Spark ALS para generar recomendaciones personalizadas,
- * con inicialización perezosa de Spark para un arranque robusto.
+ * Utiliza Apache Spark ALS para generar recomendaciones personalizadas.
  *
  * @author Iván Andrés Castillo Iligaray
- * @version 1.2
- * @since 2025-06-26
+ * @version 1.2.0
+ * @since 2025-07-09
  */
 @Service
 @RequiredArgsConstructor
 public class RecommendationServiceImplement implements RecommendationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RecommendationServiceImplement.class);
+    private static final String RECOMMENDATION_CACHE_KEY = "recommendation:user:";
+    private static final long RECOMMENDATION_TTL_MINUTES = 60;
+
     private final ProductRepository productRepository;
     private final ProductRatingRepository productRatingRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final PodStreamPrometheusConfig podStreamPrometheusConfig;
 
     private volatile SparkSession sparkSession;
     private volatile ALSModel alsModel;
-    private static final Logger logger = LoggerFactory.getLogger(RecommendationServiceImplement.class);
     private final Object sparkSessionLock = new Object();
 
     @PreDestroy
@@ -76,6 +82,7 @@ public class RecommendationServiceImplement implements RecommendationService {
                         logger.info("SparkSession initialized successfully in local mode.");
                     } catch (Exception e) {
                         logger.error("Failed to initialize SparkSession: {}", e.getMessage(), e);
+                        podStreamPrometheusConfig.incrementRecommendationErrors();
                         throw new RuntimeException("Spark initialization failed", e);
                     }
                 }
@@ -88,9 +95,12 @@ public class RecommendationServiceImplement implements RecommendationService {
     public void trainModel() {
         logger.info("Starting recommendation model training...");
         try {
-            List<ProductRating> ratings = productRatingRepository.findAll();
+            List<ProductRating> ratings = productRatingRepository.findAll().stream()
+                    .filter(ProductRating::isActive)
+                    .collect(Collectors.toList());
             if (ratings.isEmpty()) {
                 logger.warn("No ratings available for training. Skipping model training.");
+                podStreamPrometheusConfig.incrementRecommendationErrors();
                 return;
             }
 
@@ -100,7 +110,7 @@ public class RecommendationServiceImplement implements RecommendationService {
                     .select(
                             functions.col("client.id").as("userId"),
                             functions.col("product.id").as("productId"),
-                            functions.col("rating").as("rating").cast(DataTypes.FloatType)
+                            functions.col("rating").as("rating").cast(DataTypes.IntegerType)
                     );
 
             ratingsDataset.cache();
@@ -127,21 +137,33 @@ public class RecommendationServiceImplement implements RecommendationService {
             double rmse = evaluator.evaluate(predictions);
             logger.info("Model trained successfully. Root-mean-square error = {}", rmse);
             ratingsDataset.unpersist();
-
+            podStreamPrometheusConfig.incrementRecommendationSuccess();
         } catch (Exception e) {
             logger.error("Error during model training: {}", e.getMessage(), e);
+            podStreamPrometheusConfig.incrementRecommendationErrors();
         }
     }
 
     @Override
     @Cacheable(value = "userRecommendations", key = "#userId")
     public List<RecommendationResponseDTO> getRecommendationsForUser(Long userId, int howMany) {
+        String cacheKey = RECOMMENDATION_CACHE_KEY + userId;
+        @SuppressWarnings("unchecked")
+        List<RecommendationResponseDTO> cachedResults = (List<RecommendationResponseDTO>) redisTemplate.opsForValue().get(cacheKey);
+        if (cachedResults != null) {
+            logger.info("Recommendations for user {} retrieved from cache", userId);
+            podStreamPrometheusConfig.incrementRecommendationCacheHit();
+            return cachedResults;
+        }
+
         if (userId == null || userId <= 0) {
             logger.warn("Invalid userId: {}. Falling back to popular products.", userId);
+            podStreamPrometheusConfig.incrementRecommendationErrors();
             return getPopularProducts(howMany);
         }
         if (this.alsModel == null) {
             logger.warn("ALS model is not trained. Falling back to popular products.");
+            podStreamPrometheusConfig.incrementRecommendationErrors();
             return getPopularProducts(howMany);
         }
 
@@ -166,26 +188,29 @@ public class RecommendationServiceImplement implements RecommendationService {
             List<Long> productIds = recommendationRows.get(0).getList(0);
             List<Float> scores = recommendationRows.get(0).getList(1);
 
-            return productIds.stream()
-                    .map(id -> {
-                        Product product = productRepository.findById(id).orElse(null);
-                        if (product == null) {
-                            logger.warn("Recommended product with ID {} not found in database.", id);
-                            return null;
-                        }
-                        int index = productIds.indexOf(id);
-                        return RecommendationResponseDTO.builder()
-                                .id(product.getId())
-                                .productName(product.getName())
-                                .category(product.getCategory() != null ? product.getCategory().toString() : null)
-                                .image(product.getImage())
-                                .score(scores.get(index).doubleValue())
-                                .build();
-                    })
+            List<RecommendationResponseDTO> results = productIds.stream()
+                    .map(id -> productRepository.findById(id)
+                            .filter(Product::isActive)
+                            .map(product -> {
+                                int index = productIds.indexOf(id);
+                                return RecommendationResponseDTO.builder()
+                                        .id(product.getId())
+                                        .productName(product.getName())
+                                        .category(product.getCategory() != null ? product.getCategory().toString() : null)
+                                        .image(product.getImage())
+                                        .score(scores.get(index).doubleValue())
+                                        .build();
+                            })
+                            .orElse(null))
                     .filter(dto -> dto != null)
                     .collect(Collectors.toList());
+
+            redisTemplate.opsForValue().set(cacheKey, results, RECOMMENDATION_TTL_MINUTES, TimeUnit.MINUTES);
+            podStreamPrometheusConfig.incrementRecommendationSuccess();
+            return results;
         } catch (Exception e) {
             logger.error("Error generating recommendations for user {}: {}", userId, e.getMessage(), e);
+            podStreamPrometheusConfig.incrementRecommendationErrors();
             return getPopularProducts(howMany);
         }
     }
@@ -194,19 +219,23 @@ public class RecommendationServiceImplement implements RecommendationService {
     public List<RecommendationResponseDTO> getPopularProducts(int howMany) {
         logger.info("Fetching {} popular products.", howMany);
         try {
-            Pageable pageable = PageRequest.of(0, howMany);
-            List<Product> popularProducts = productRepository.findTopPopularProducts(pageable);
-            return popularProducts.stream()
+            List<Product> popularProducts = productRepository.findByOrderBySalesCountDesc(PageRequest.of(0, howMany));
+            List<RecommendationResponseDTO> results = popularProducts.stream()
+                    .filter(Product::isActive)
                     .map(product -> RecommendationResponseDTO.builder()
                             .id(product.getId())
                             .productName(product.getName())
                             .category(product.getCategory() != null ? product.getCategory().toString() : null)
                             .image(product.getImage())
-                            .score((double) product.getSalesCount()) // Usar salesCount como score
+                            .score((double) product.getSalesCount())
                             .build())
                     .collect(Collectors.toList());
+            redisTemplate.opsForValue().set(RECOMMENDATION_CACHE_KEY + "popular:" + howMany, results, RECOMMENDATION_TTL_MINUTES, TimeUnit.MINUTES);
+            podStreamPrometheusConfig.incrementRecommendationSuccess();
+            return results;
         } catch (Exception e) {
             logger.error("Error fetching popular products: {}", e.getMessage(), e);
+            podStreamPrometheusConfig.incrementRecommendationErrors();
             return Collections.emptyList();
         }
     }
@@ -214,24 +243,35 @@ public class RecommendationServiceImplement implements RecommendationService {
     @Override
     @Cacheable(value = "itemRecommendations", key = "#productId")
     public List<RecommendationResponseDTO> getContentBasedRecommendations(Long productId, int howMany) {
+        String cacheKey = RECOMMENDATION_CACHE_KEY + "item:" + productId;
+        @SuppressWarnings("unchecked")
+        List<RecommendationResponseDTO> cachedResults = (List<RecommendationResponseDTO>) redisTemplate.opsForValue().get(cacheKey);
+        if (cachedResults != null) {
+            logger.info("Content-based recommendations for product {} retrieved from cache", productId);
+            podStreamPrometheusConfig.incrementRecommendationCacheHit();
+            return cachedResults;
+        }
+
         if (productId == null || productId <= 0) {
             logger.warn("Invalid productId: {}. Returning empty list.", productId);
+            podStreamPrometheusConfig.incrementRecommendationErrors();
             return Collections.emptyList();
         }
 
         try {
             Product targetProduct = productRepository.findById(productId)
+                    .filter(Product::isActive)
                     .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
 
-            List<Product> similarProducts = productRepository.findAll().stream()
+            List<Product> similarProducts = productRepository.findByActiveTrue().stream()
                     .filter(p -> !p.getId().equals(targetProduct.getId()))
                     .filter(p -> p.getCategory() != null && p.getCategory().equals(targetProduct.getCategory()))
                     .filter(p -> p.getColor() != null && p.getColor().equals(targetProduct.getColor()))
-                    .sorted((p1, p2) -> Double.compare(p2.getAveragePoints(), p1.getAveragePoints()))
+                    .sorted((p1, p2) -> Double.compare(p2.getAverageRating(), p1.getAverageRating()))
                     .limit(howMany)
                     .collect(Collectors.toList());
 
-            return similarProducts.stream()
+            List<RecommendationResponseDTO> results = similarProducts.stream()
                     .map(product -> RecommendationResponseDTO.builder()
                             .id(product.getId())
                             .productName(product.getName())
@@ -240,8 +280,13 @@ public class RecommendationServiceImplement implements RecommendationService {
                             .score(calculateSimilarityScore(targetProduct, product))
                             .build())
                     .collect(Collectors.toList());
+
+            redisTemplate.opsForValue().set(cacheKey, results, RECOMMENDATION_TTL_MINUTES, TimeUnit.MINUTES);
+            podStreamPrometheusConfig.incrementRecommendationSuccess();
+            return results;
         } catch (Exception e) {
             logger.error("Error generating content-based recommendations for product {}: {}", productId, e.getMessage(), e);
+            podStreamPrometheusConfig.incrementRecommendationErrors();
             return Collections.emptyList();
         }
     }

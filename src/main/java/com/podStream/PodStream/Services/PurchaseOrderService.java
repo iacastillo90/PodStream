@@ -1,202 +1,80 @@
 package com.podStream.PodStream.Services;
 
-import com.podStream.PodStream.Models.*;
-import com.podStream.PodStream.Models.User.Client;
-import com.podStream.PodStream.Repositories.PurchaseOrderRepository;
-import io.micrometer.core.instrument.MeterRegistry;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
+import com.podStream.PodStream.DTOS.PurchaseOrderDTO;
+import com.podStream.PodStream.Models.OrderStatus;
+import org.springframework.security.core.Authentication;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-@Service
-public class PurchaseOrderService {
+/**
+ * Interfaz para gestionar órdenes de compra en PodStream.
+ *
+ * @author Iván Andrés Castillo Iligaray
+ * @version 1.1.0
+ * @since 2025-07-09
+ */
+public interface PurchaseOrderService {
 
-    @Autowired
-    private PDFService pdfService;
+    /**
+     * Crea una nueva orden de compra.
+     *
+     * @param orderDTO       El DTO de la orden.
+     * @param authentication La autenticación del usuario.
+     * @return El DTO de la orden creada.
+     */
+    PurchaseOrderDTO createPurchaseOrder(PurchaseOrderDTO orderDTO, Authentication authentication);
 
-    @Autowired
-    private JavaMailSender mailSender;
+    /**
+     * Crea una orden de compra desde el carrito.
+     *
+     * @param sessionId      El ID de la sesión.
+     * @param authentication La autenticación del usuario.
+     * @return El DTO de la orden creada.
+     */
+    PurchaseOrderDTO createPurchaseOrderFromCart(String sessionId, Authentication authentication);
 
-    @Autowired
-    private PurchaseOrderRepository purchaseOrderRepository;
+    /**
+     * Actualiza el estado de una orden.
+     *
+     * @param orderId        El ID de la orden.
+     * @param newStatus      El nuevo estado.
+     * @param changedBy      Quién realizó el cambio.
+     * @param authentication La autenticación del usuario.
+     * @return El DTO de la orden actualizada.
+     */
+    PurchaseOrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus, String changedBy, Authentication authentication);
 
-    @Autowired
-    private MeterRegistry meterRegistry;
+    /**
+     * Obtiene una orden por su ID.
+     *
+     * @param orderId        El ID de la orden.
+     * @param authentication La autenticación del usuario.
+     * @return El DTO de la orden.
+     */
+    PurchaseOrderDTO getOrder(Long orderId, Authentication authentication);
 
-    @Autowired
-    private CartService cartService;
+    /**
+     * Obtiene una orden por su ticket.
+     *
+     * @param ticket         El ticket de la orden.
+     * @param authentication La autenticación del usuario.
+     * @return El DTO de la orden.
+     */
+    PurchaseOrderDTO getOrderByTicket(String ticket, Authentication authentication);
 
-    private static final Logger logger = LoggerFactory.getLogger(PurchaseOrderService.class);
+    /**
+     * Obtiene todas las órdenes activas de un cliente.
+     *
+     * @param authentication La autenticación del usuario.
+     * @return Lista de DTOs de órdenes.
+     */
+    List<PurchaseOrderDTO> getOrdersByClient(Authentication authentication);
 
-    public PurchaseOrder createPurchaseOrder(PurchaseOrder order) {
-        // Obtener el usuario autenticado desde el contexto de seguridad
-        Client authenticatedUser = (Client) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (authenticatedUser == null) {
-            throw new RuntimeException("No se encontró un usuario autenticado");
-        }
-        order.setClient(authenticatedUser);
-
-        // Establecer estado inicial y registrar en el historial
-        order.setStatus(OrderStatus.PENDING_PAYMENT);
-        OrderStatusHistory initialHistory = new OrderStatusHistory();
-        initialHistory.setPurchaseOrder(order);
-        initialHistory.setNewStatus(OrderStatus.PENDING_PAYMENT);
-        initialHistory.setChangedBy("system");
-        order.getStatusHistory().add(initialHistory);
-
-        // Guardar la orden
-        PurchaseOrder savedOrder = purchaseOrderRepository.save(order);
-        logger.info("Orden de compra creada: ID={}, Estado={}", savedOrder.getId(), savedOrder.getStatus());
-
-        // Generar y enviar factura
-        byte[] pdfBytes = pdfService.generateInvoice(savedOrder);
-        sendInvoiceEmail(savedOrder, pdfBytes);
-
-        // Registrar métrica
-        meterRegistry.counter("orders.created", "status", savedOrder.getStatus().toString()).increment();
-
-        return savedOrder;
-    }
-
-    @Transactional
-    public PurchaseOrder createPurchaseOrderFromCart (String sessionId) {
-        Client authenticatedUser = (Client) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (authenticatedUser == null){
-            throw new RuntimeException("No se encontró un usuario autenticado");
-        }
-
-        Cart cart = cartService.getOrCreateCart(sessionId);
-        if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("El carrito está vací́o");
-        }
-
-        // Crear PurchaseOrder desde Cart
-        PurchaseOrder order = new PurchaseOrder();
-        order.setClient(authenticatedUser);
-        order.setStatus(OrderStatus.PENDING_PAYMENT);
-        order.setAmount(calculateTotalAmount(cart));
-
-        // Transferir items del carrito a la orden
-        Set<Details> orderItems = new HashSet<>();
-        for (CartItem item : cart.getItems()) {
-            Details details = new Details();
-            details.setPurchaseOrder(order);
-            details.setProduct(item.getProduct());
-            details.setQuantity(item.getQuantity());
-            details.setPrice(item.getProduct().getPrice());
-            orderItems.add(details);
-        }
-        order.setDetails(orderItems);
-
-        // Establecer estado inicial
-        OrderStatusHistory initialHistory = new OrderStatusHistory();
-        initialHistory.setPurchaseOrder(order);
-        initialHistory.setNewStatus(OrderStatus.PENDING_PAYMENT);
-        initialHistory.setChangedBy("system");
-        order.getStatusHistory().add(initialHistory);
-
-        // Guardar la orden
-        PurchaseOrder savedOrder = purchaseOrderRepository.save(order);
-        logger.info("Orden de compra creada: ID={}, Estado={}", savedOrder.getId(), savedOrder.getStatus());
-
-        //Vaciar el carrito
-        cartService.clearCart(sessionId);
-
-
-        // Generar y enviar factura
-        byte[] pdfBytes = pdfService.generateInvoice(savedOrder);
-        sendInvoiceEmail(savedOrder, pdfBytes);
-
-        // Registrar métrica
-        meterRegistry.counter("orders.created", "status", savedOrder.getStatus().toString()).increment();
-
-        return savedOrder;
-
-    }
-
-    private double calculateTotalAmount(Cart cart) {
-        return cart.getItems().stream()
-                .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
-                .sum();
-    }
-
-    public PurchaseOrder updateOrderStatus(Long orderId, OrderStatus newStatus, String changedBy) {
-        PurchaseOrder order = purchaseOrderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Orden de compra no encontrada"));
-
-        // Registrar cambio de estado
-        OrderStatusHistory history = new OrderStatusHistory();
-        history.setPurchaseOrder(order);
-        history.setOldStatus(order.getStatus());
-        history.setNewStatus(newStatus);
-        history.setChangedBy(changedBy);
-        order.getStatusHistory().add(history);
-
-        // Actualizar estado
-        order.setStatus(newStatus);
-        PurchaseOrder updatedOrder = purchaseOrderRepository.save(order);
-        logger.info("Orden de compra actualizada: ID={}, Nuevo estado={}", updatedOrder.getId(), newStatus);
-
-        // Registrar métrica
-        meterRegistry.counter("orders.status.updated", "new_status", newStatus.toString()).increment();
-
-        // Enviar notificación al cliente
-        sendStatusUpdateEmail(updatedOrder);
-
-        return updatedOrder;
-    }
-
-    private void sendInvoiceEmail(PurchaseOrder order, byte[] pdfBytes) {
-        MimeMessage message = mailSender.createMimeMessage();
-        try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            String email = order.getClient().getEmail();
-            if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                logger.warn("El correo del cliente es inválido o está vacío para la orden #{}", order.getId());
-                throw new IllegalArgumentException("El correo del cliente es inválido o está vacío");
-            }
-            helper.setTo(email);
-            helper.setSubject("Factura #" + order.getTicket());
-            helper.setText("Adjuntamos tu factura electrónica.");
-            helper.addAttachment("factura.pdf", new ByteArrayResource(pdfBytes));
-            mailSender.send(message);
-            meterRegistry.counter("emails.sent", "type", "invoice").increment();
-        } catch (MessagingException e) {
-            logger.error("Error al enviar factura para la orden #{}", order.getId(), e);
-            meterRegistry.counter("emails.errors", "type", "invoice").increment();
-            throw new RuntimeException("Error al enviar la factura por correo", e);
-        }
-    }
-
-    private void sendStatusUpdateEmail(PurchaseOrder order) {
-        MimeMessage message = mailSender.createMimeMessage();
-        try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            String email = order.getClient().getEmail();
-            if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                logger.warn("El correo del cliente es inválido o está vacío para la orden #{}", order.getId());
-                throw new IllegalArgumentException("El correo del cliente es inválido o está vacío");
-            }
-            helper.setTo(email);
-            helper.setSubject("Actualización de Orden #" + order.getTicket());
-            helper.setText("Tu orden ha sido actualizada.\nEstado: " + order.getStatus().getDescription());
-            mailSender.send(message);
-        } catch (MessagingException e) {
-            logger.error("Error al enviar actualización de estado para la orden #{}", order.getId(), e);
-            throw new RuntimeException("Error al enviar correo de actualización", e);
-        }
-    }
+    /**
+     * Elimina (soft delete) una orden.
+     *
+     * @param orderId        El ID de la orden.
+     * @param authentication La autenticación del usuario.
+     */
+    void deleteOrder(Long orderId, Authentication authentication);
 }

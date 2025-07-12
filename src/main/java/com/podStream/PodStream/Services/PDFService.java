@@ -49,7 +49,7 @@ public class PDFService {
         // Campos requeridos por el SII
         document.add(new Paragraph("Factura Electrónica"));
         document.add(new Paragraph("Folio: #" + order.getTicket()));
-        document.add(new Paragraph("Fecha: " + order.getDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+        document.add(new Paragraph("Fecha: " + order.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
         document.add(new Paragraph("RUT Cliente: " + order.getCustomerRut()));
 
         // Nombre del cliente (usando User)

@@ -1,16 +1,21 @@
 package com.podStream.PodStream.Models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 /**
- * La entidad Details representa los detalles de los productos dentro de una orden de compra.
- * Almacena información como la cantidad, precio y descripción del producto en una compra.
- *
- * Ejemplo de uso:
- * Details detail = new Details(2, 199.99, "Micrófono de alta calidad", order, product);
+ * Entidad que representa los detalles de los productos dentro de una orden de compra en PodStream.
  */
 @Entity
+@Table(name = "order_details")
+@Data
 public class Details {
 
     @Id
@@ -18,55 +23,40 @@ public class Details {
     @GenericGenerator(name = "native", strategy = "native")
     private long id;
 
-    /**
-     * Nombre del producto.
-     */
+    @NotBlank(message = "El nombre del producto no puede estar vacío")
+    @Column(name = "product_name", nullable = false)
     private String productName;
 
-    /**
-     * Cantidad de productos en la orden.
-     */
-    private int quantity;
+    @Positive(message = "La cantidad debe ser positiva")
+    @Column(nullable = false)
+    private Integer quantity;
 
-    /**
-     * Precio de los productos en la orden.
-     */
-    private double price;
+    @Positive(message = "El precio debe ser positivo")
+    @Column(nullable = false)
+    private Double price;
 
-    /**
-     * Descripción del producto en la orden.
-     */
     private String description;
 
-    /**
-     * Relación con la orden de compra.
-     */
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "purchaseOrder_id")
+    @NotNull(message = "La orden de compra es obligatoria")
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "purchase_order_id", nullable = false)
     private PurchaseOrder purchaseOrder;
 
-    /**
-     * Relación con el producto de la orden.
-     */
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id")
+    @NotNull(message = "El producto es obligatorio")
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    /**
-     * Constructor vacío necesario para JPA.
-     */
+    @CreatedDate
+    @Column(name = "created_date", nullable = false, updatable = false)
+    private LocalDateTime createdDate;
+
+    @Column(name = "active")
+    private boolean active = true;
+
     public Details() {
     }
 
-    /**
-     * Constructor que permite crear un detalle de la orden con la información básica.
-     *
-     * @param quantity      Cantidad de productos en la orden.
-     * @param price         Precio de los productos.
-     * @param description   Descripción del producto.
-     * @param purchaseOrder Orden de compra asociada.
-     * @param product       Producto asociado.
-     */
     public Details(String productName, int quantity, double price, String description, PurchaseOrder purchaseOrder, Product product) {
         this.productName = productName;
         this.quantity = quantity;
@@ -74,133 +64,6 @@ public class Details {
         this.description = description;
         this.purchaseOrder = purchaseOrder;
         this.product = product;
-    }
-
-    // Getters y Setters con Javadoc
-
-    /**
-     * Obtiene el ID del detalle de la orden.
-     *
-     * @return ID del detalle.
-     */
-    public long getId() {
-        return id;
-    }
-
-    /**
-     * Establece el ID del detalle de la orden.
-     *
-     * @param id ID del detalle.
-     */
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    /**
-     * Obtiene el nombre del producto en la orden.
-     *
-     * @return Nombre del producto.
-     */
-    public String getProductName() {
-        return productName;
-    }
-
-    /**
-     * Establece el nombre del producto en la orden.
-     *
-     * @param productName Nombre del producto.
-     */
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    /**
-     * Obtiene la cantidad de productos en la orden.
-     *
-     * @return Cantidad de productos.
-     */
-    public int getQuantity() {
-        return quantity;
-    }
-
-    /**
-     * Establece la cantidad de productos en la orden.
-     *
-     * @param quantity Cantidad de productos.
-     */
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    /**
-     * Obtiene el precio de los productos en la orden.
-     *
-     * @return Precio de los productos.
-     */
-    public double getPrice() {
-        return price;
-    }
-
-    /**
-     * Establece el precio de los productos en la orden.
-     *
-     * @param price Precio de los productos.
-     */
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    /**
-     * Obtiene la descripción de los productos en la orden.
-     *
-     * @return Descripción del producto.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Establece la descripción de los productos en la orden.
-     *
-     * @param description Descripción del producto.
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
-     * Obtiene la orden de compra asociada a los productos.
-     *
-     * @return Orden de compra asociada.
-     */
-    public PurchaseOrder getPurchaseOrder() {
-        return purchaseOrder;
-    }
-
-    /**
-     * Establece la orden de compra asociada a los productos.
-     *
-     * @param purchaseOrder Orden de compra asociada.
-     */
-    public void setPurchaseOrder(PurchaseOrder purchaseOrder) {
-        this.purchaseOrder = purchaseOrder;
-    }
-
-    /**
-     * Obtiene el producto asociado a la orden.
-     *
-     * @return Producto asociado.
-     */
-    public Product getProduct() {
-        return product;
-    }
-
-    /**
-     * Establece el producto asociado a la orden.
-     *
-     * @param product Producto asociado.
-     */
-    public void setProduct(Product product) {
-        this.product = product;
+        this.active = true;
     }
 }

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.util.HashSet;
@@ -18,6 +20,8 @@ import java.util.Set;
  * Address = new Address("Main Street", 123, "Madrid", "Apto 4B", 2, true, "28001", person);
  */
 @Entity
+@Table(name = "addresses")
+@Data
 public class Address {
 
     @Id
@@ -28,36 +32,43 @@ public class Address {
     /**
      * Calle de la dirección.
      */
+    @NotBlank(message = "Street cannot be empty")
     private String street;
 
     /**
      * Número de la dirección.
      */
+    @NotBlank(message = "Number cannot be empty")
     private long number;
 
     /**
      * Ciudad de la dirección.
      */
+    @NotBlank(message = "City cannot be empty")
     private String city;
 
     /**
      * Apartamento de la dirección, si corresponde.
      */
+    @NotBlank(message = "Apartament cannot be empty")
     private String apartament;
 
     /**
      * Piso de la dirección, si corresponde.
      */
+    @NotBlank(message = "Floor cannot be empty")
     private long floor;
 
     /**
      * Estado de la dirección, puede ser activa o inactiva.
      */
+    @NotBlank(message = "Status cannot be empty")
     private boolean status;
 
     /**
      * Código postal de la dirección.
      */
+    @NotBlank(message = "Zip Code cannot be empty")
     private String zipCode;
 
     /**
@@ -74,6 +85,8 @@ public class Address {
     @OneToMany(mappedBy = "address", fetch = FetchType.LAZY)
     @JsonManagedReference(value = "address-purchaseOrder") // Ignorar este lado de la relación
     private Set<PurchaseOrder> purchaseOrder = new HashSet<>();
+
+    private Boolean usable = true;
 
     /**
      * Constructor vacío necesario para JPA.

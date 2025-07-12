@@ -1,67 +1,55 @@
 
 package com.podStream.PodStream.DTOS;
 
+import com.esotericsoftware.kryo.NotNull;
+import com.podStream.PodStream.Models.ClientInteraction;
 import com.podStream.PodStream.Models.InteractionType;
 import com.podStream.PodStream.Models.Product;
 import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO para representar una interacción de un cliente con un producto en PodStream.
+ */
+@Data
 public class ClientInteractionDTO {
 
     private Long id;
 
-    private Client client;
+    @NotNull
+    @Min(value = 1, message = "El ID del cliente debe ser mayor que 0")
+    private Long clientId;
 
-    private Product product;
+    @NotNull
+    @Min(value = 1, message = "El ID del producto debe ser mayor que 0")
+    private Long productId;
 
+    @NotNull
     private InteractionType interactionType;
 
     private LocalDateTime timestamp;
 
     private String sessionId;
 
+    @Min(value = 0, message = "La cantidad no puede ser negativa")
     private Integer quantity;
 
-    public ClientInteractionDTO() {
-    }
+    private boolean active;
 
-    public ClientInteractionDTO(Long id, Client client, Product product, InteractionType interactionType, LocalDateTime timestamp, String sessionId, Integer quantity) {
-        this.id = id;
-        this.client = client;
-        this.product = product;
-        this.interactionType = interactionType;
-        this.timestamp = timestamp;
-        this.sessionId = sessionId;
-        this.quantity = quantity;
-    }
+    public ClientInteractionDTO() {}
 
-    public Long getId() {
-        return id;
-    }
-
-    public Client getClient() {
-        return client;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public InteractionType getInteractionType() {
-        return interactionType;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
+    public ClientInteractionDTO(ClientInteraction interaction) {
+        this.id = interaction.getId();
+        this.clientId = interaction.getClient().getId();
+        this.productId = interaction.getProduct().getId();
+        this.interactionType = interaction.getInteractionType();
+        this.timestamp = interaction.getTimestamp();
+        this.sessionId = interaction.getSessionId();
+        this.quantity = interaction.getQuantity();
+        this.active = interaction.isActive();
     }
 }

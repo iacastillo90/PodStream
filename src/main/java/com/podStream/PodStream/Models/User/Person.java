@@ -60,6 +60,15 @@ public class Person implements UserDetails {
     @Enumerated(EnumType.STRING) 
     Role role;
 
+    public Person(String username, String firstname, String lastname, String password, String email, Role role) {
+        this.username = username;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
       return List.of(new SimpleGrantedAuthority((role.name())));
@@ -84,4 +93,6 @@ public class Person implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+
 }

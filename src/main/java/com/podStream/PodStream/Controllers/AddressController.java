@@ -3,14 +3,12 @@ package com.podStream.PodStream.Controllers;
 import com.podStream.PodStream.DTOS.AddressDTO;
 import com.podStream.PodStream.Models.Address;
 import com.podStream.PodStream.Models.ApiResponse;
-import com.podStream.PodStream.Repositories.AddressRepository;
 import com.podStream.PodStream.Services.AddressService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,8 +23,7 @@ public class AddressController {
 
     private static final Logger logger = LoggerFactory.getLogger(AddressController.class);
 
-    @Autowired
-    private AddressService addressService;
+    private static AddressService addressService;
 
     @GetMapping
     @Operation(summary = "Lista de todas las direcciones", description = "Obtiene todas las direcciones disponibles.")
@@ -39,7 +36,7 @@ public class AddressController {
     @GetMapping("/{id}")
     @Operation(summary = "Obtener una direccion por ID", description = "Obtiene los detalles de una direccion especifica")
     @PreAuthorize("hasRole('Person')")
-    public ResponseEntity<ApiResponse<AddressDTO>> getAddressById (@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Address>> getAddressById (@PathVariable Long id) {
         logger.info("Fetching address with id: {}",id);
         return ResponseEntity.ok(ApiResponse.success("Address retrieved", addressService.findById(id)));
     }
@@ -52,6 +49,23 @@ public class AddressController {
         return new ResponseEntity<>(ApiResponse.success("Address created", addressService.newAddress(address)),  HttpStatus.CREATED );
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar direccion", description = "Actualiza los detalles de una direccion")
+    @PreAuthorize("hasRole('Person')")
+    public ResponseEntity<ApiResponse<Address>> updateAddress (@PathVariable Long id,
+                                                                  @Valid @RequestBody Address address) {
+        logger.info("Updating address with id: {}", id);
+        return ResponseEntity.ok(ApiResponse.success("Address update", addressService.update(address)));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar una direccion", description = "Eliminar una direccionn que no se usara,Requiere rol Person")
+    @PreAuthorize("hasRole('Person')")
+    public ResponseEntity<ApiResponse<Void>> deleteAddress (@PathVariable Long id) {
+        logger.info("Deleting address with id: {}", id);
+        addressService.deleteById(id);
+        return ResponseEntity.ok(ApiResponse.success("Address deleted",null));
+    }
 
 }
 

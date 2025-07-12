@@ -10,8 +10,13 @@ public interface AddressService {
 
     List<AddressDTO> findAll();
 
-    AddressDTO findById(Long id);
+    Address findById(Long id);
 
     AddressDTO newAddress(@Valid Address address);
+
+
+    Address update(@Valid Address address);
+
+    void deleteById(Long id);
 }
 

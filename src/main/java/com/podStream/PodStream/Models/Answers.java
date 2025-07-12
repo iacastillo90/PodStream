@@ -2,7 +2,15 @@ package com.podStream.PodStream.Models;
 
 import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 
 /**
@@ -13,6 +21,10 @@ import java.time.LocalDateTime;
  * Answers answer = new Answers(1L, "Esta es una respuesta", "user123", comment, person, LocalDateTime.now(), true);
  */
 @Entity
+@Table(name = "answers")
+@Data
+@Document(indexName = "answers")
+@EntityListeners(AuditingEntityListener.class)
 public class Answers {
 
     @Id
@@ -23,190 +35,49 @@ public class Answers {
     /**
      * Cuerpo de la respuesta.
      */
+    @NotBlank(message = "Body is required")
+    @Size(max = 10000, message = "Body must not exceed 10000 characters")
     @Column(length = 10000)
     private String body;
 
     /**
      * Nombre de usuario que realizó la respuesta.
      */
+    @NotBlank(message = "Username is required")
+    @Size(max = 50, message = "Username must not exceed 50 characters")
     private String userName;
 
     /**
-     * Relación con el comentario original.
+     * Comentario asociado a la respuesta.
      */
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn (name = "comment_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id", nullable = false)
     private Comment comment;
 
     /**
-     * Persona que realizó la respuesta.
+     * Cliente que realizó la respuesta.
      */
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn (name = "client_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", nullable = false)
     private Client client;
 
     /**
-     * Fecha y hora de la respuesta.
+     * Fecha de creación de la respuesta.
      */
-    private LocalDateTime date;
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
     /**
-     * Indica si la respuesta está activa o no.
+     * Fecha de última actualización de la respuesta.
      */
-    private boolean active;
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     /**
-     * Constructor vacío necesario para JPA.
+     * Indica si la respuesta está activa.
      */
-    public Answers() {
-    }
+    private boolean active = true;
 
-    /**
-     * Constructor para crear una respuesta con información completa.
-     *
-     * @param id ID de la respuesta.
-     * @param body Contenido de la respuesta.
-     * @param userName Nombre de usuario que hizo la respuesta.
-     * @param comment Comentario original asociado a la respuesta.
-     * @param client Persona que realizó la respuesta.
-     * @param date Fecha y hora en que se realizó la respuesta.
-     * @param active Indica si la respuesta está activa.
-     */
-    public Answers(long id, String body, String userName, Comment comment, Client client, LocalDateTime date, boolean active) {
-        this.id = id;
-        this.body = body;
-        this.userName = userName;
-        this.comment = comment;
-        this.client = client;
-        this.date = date;
-        this.active = active;
-    }
 
-    // Getters y Setters con Javadoc
-
-    /**
-     * Obtiene el ID de la respuesta.
-     *
-     * @return ID de la respuesta.
-     */
-    public long getId() {
-        return id;
-    }
-
-    /**
-     * Establece el ID de la respuesta.
-     *
-     * @param id ID de la respuesta.
-     */
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    /**
-     * Obtiene el cuerpo de la respuesta.
-     *
-     * @return Contenido de la respuesta.
-     */
-    public String getBody() {
-        return body;
-    }
-
-    /**
-     * Establece el cuerpo de la respuesta.
-     *
-     * @param body Contenido de la respuesta.
-     */
-    public void setBody(String body) {
-        this.body = body;
-    }
-
-    /**
-     * Obtiene el nombre del usuario que hizo la respuesta.
-     *
-     * @return Nombre de usuario.
-     */
-    public String getUserName() {
-        return userName;
-    }
-
-    /**
-     * Establece el nombre del usuario que hizo la respuesta.
-     *
-     * @param userName Nombre de usuario.
-     */
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    /**
-     * Obtiene el comentario asociado a la respuesta.
-     *
-     * @return Comentario asociado.
-     */
-    public Comment getComment() {
-        return comment;
-    }
-
-    /**
-     * Establece el comentario asociado a la respuesta.
-     *
-     * @param comment Comentario asociado.
-     */
-    public void setComment(Comment comment) {
-        this.comment = comment;
-    }
-
-    /**
-     * Obtiene la persona que realizó la respuesta.
-     *
-     * @return Persona que hizo la respuesta.
-     */
-    public Client getClient() {
-        return client;
-    }
-
-    /**
-     * Establece la persona que realizó la respuesta.
-     *
-     * @param client Persona que hizo la respuesta.
-     */
-    public void setClient(Client client) {
-        this.client = client;
-    }
-
-    /**
-     * Obtiene la fecha y hora en que se hizo la respuesta.
-     *
-     * @return Fecha y hora de la respuesta.
-     */
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    /**
-     * Establece la fecha y hora en que se hizo la respuesta.
-     *
-     * @param date Fecha y hora de la respuesta.
-     */
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
-
-    /**
-     * Verifica si la respuesta está activa.
-     *
-     * @return Estado de la respuesta (activa/inactiva).
-     */
-    public boolean isActive() {
-        return active;
-    }
-
-    /**
-     * Establece si la respuesta está activa.
-     *
-     * @param active Estado de la respuesta (activa/inactiva).
-     */
-    public void setActive(boolean active) {
-        this.active = active;
-    }
 }

@@ -7,11 +7,12 @@ import com.podStream.PodStream.Models.Response.AuthResponse;
 import com.podStream.PodStream.Models.User.Client;
 import com.podStream.PodStream.Models.User.Role;
 import com.podStream.PodStream.Models.User.Person;
-import com.podStream.PodStream.Repositories.UserRepository;
+import com.podStream.PodStream.Repositories.Jpa.PersonRepository;
 import com.podStream.PodStream.Services.CartService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -27,11 +28,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final UserRepository userRepository;
-    private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final CartService cartService;
+
+    @Autowired
+    private PersonRepository personRepository;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private CartService cartService;
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     /**
@@ -51,7 +58,7 @@ public class AuthService {
             logger.warn("Login failed for username: {}", request.getUsername());
             throw e;
         }
-        UserDetails user = userRepository.findByUsername(request.getUsername())
+        UserDetails user = personRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> {
                     logger.error("User not found after authentication: {}", request.getUsername());
                     return new IllegalStateException("User not found after authentication");
@@ -88,11 +95,11 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         logger.info("Register attempt for username: {}", request.getUsername());
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (personRepository.findByUsername(request.getUsername()).isPresent()) {
             logger.warn("Registration failed: Username {} already exists", request.getUsername());
             throw new IllegalArgumentException("Username already exists");
         }
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (personRepository.findByEmail(request.getEmail()).isPresent()) {
             logger.warn("Registration failed: Email {} already exists", request.getEmail());
             throw new IllegalArgumentException("Email already exists");
         }
@@ -106,7 +113,7 @@ public class AuthService {
                 .role(Role.USER)
                 .build();
 
-        userRepository.save(person);
+        personRepository.save(person);
 
         return AuthResponse.builder()
                 .token(jwtService.getToken(person))

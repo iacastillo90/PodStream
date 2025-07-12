@@ -1,101 +1,84 @@
 package com.podStream.PodStream.DTOS;
 
 import com.podStream.PodStream.Models.*;
-import jakarta.persistence.*;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+/**
+ * DTO para representar una orden de compra en la API REST de PodStream.
+ *
+ * @author Iván Andrés Castillo Iligaray
+ * @version 1.1.0
+ * @since 2025-07-09
+ */
+@Data
 public class PurchaseOrderDTO {
 
-    private long id;
+    private Long id;
 
-    /**
-     * Número de ticket de la orden de compra.
-     */
+    @NotBlank(message = "El ticket no puede estar vacío")
+    @Size(max = 36, message = "El ticket no puede exceder 36 caracteres")
     private String ticket;
 
-    /**
-     * Monto total de la orden de compra.
-     */
+    @Positive(message = "El monto debe ser mayor a 0")
     private double amount;
 
-    /**
-     * Fecha y hora de la orden de compra.
-     */
-    private LocalDateTime date;
+    @NotNull(message = "La fecha de creación no puede ser nula")
+    private LocalDateTime createdAt;
 
-    /**
-     * Método de pago utilizado en la orden de compra.
-     */
+    private LocalDateTime updatedAt;
+
+    @NotNull(message = "El método de pago no puede ser nulo")
+    @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    /**
-     * Dirección de envío asociada a la orden de compra.
-     */
-    private long address;
+    @Positive(message = "El ID de la dirección debe ser positivo")
+    private Long addressId;
 
-    /**
-     * Persona que realizó la compra.
-     */
-    private long client;
+    @Positive(message = "El ID del cliente debe ser positivo")
+    private Long clientId;
 
-    /**
-     * RUT del cliente para fines fiscales (SII).
-     */
     @NotBlank(message = "El RUT del cliente no puede estar vacío")
-    @Pattern(regexp = "\\d{1,2}\\.\\d{3}\\.\\d{3}-[0-9kK]", message = "RUT del cliente inválido")
+    @Pattern(regexp = "^\\d{1,2}\\.?\\d{3}\\.?\\d{3}-[0-9kK]$", message = "RUT del cliente inválido")
     private String customerRut;
 
-    /**
-     * Estado actual de la orden de compra.
-     */
+    @NotNull(message = "El estado no puede ser nulo")
     @Enumerated(EnumType.STRING)
-    private OrderStatus status = OrderStatus.PENDING_PAYMENT;
+    private OrderStatus status;
+
+    @NotEmpty(message = "La orden debe tener al menos un detalle")
+    private Set<DetailsDTO> details = new HashSet<>();
+
+    private List<OrderStatusHistoryDTO> statusHistory;
+
+    private Set<SupportTicketDTO> supportTickets;
+
+    private boolean active;
+
+    public PurchaseOrderDTO() {}
 
     public PurchaseOrderDTO(PurchaseOrder purchaseOrder) {
-        id = purchaseOrder.getId();
-        ticket = purchaseOrder.getTicket();
-        amount = purchaseOrder.getAmount();
-        date = purchaseOrder.getDate();
-        paymentMethod = purchaseOrder.getPaymentMethod();
-        address = purchaseOrder.getAddress().getId();
-        client = purchaseOrder.getClient().getId();
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public String getTicket() {
-        return ticket;
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public long getAddress() {
-        return address;
-    }
-
-    public long getClient() {
-        return client;
-    }
-
-    public String getCustomerRut() {
-        return customerRut;
-    }
-
-    public OrderStatus getStatus() {
-        return status;
+        this.id = purchaseOrder.getId();
+        this.ticket = purchaseOrder.getTicket();
+        this.amount = purchaseOrder.getAmount();
+        this.createdAt = purchaseOrder.getCreatedAt();
+        this.updatedAt = purchaseOrder.getUpdatedAt();
+        this.paymentMethod = purchaseOrder.getPaymentMethod();
+        this.addressId = purchaseOrder.getAddress().getId();
+        this.clientId = purchaseOrder.getClient().getId();
+        this.customerRut = purchaseOrder.getCustomerRut();
+        this.status = purchaseOrder.getStatus();
+        this.details = purchaseOrder.getDetails().stream().map(DetailsDTO::new).collect(Collectors.toSet());
+        this.statusHistory = purchaseOrder.getStatusHistory().stream().map(OrderStatusHistoryDTO::new).collect(Collectors.toList());
+        this.supportTickets = purchaseOrder.getSupportTickets().stream().map(SupportTicketDTO::new).collect(Collectors.toSet());
+        this.active = purchaseOrder.isActive();
     }
 }

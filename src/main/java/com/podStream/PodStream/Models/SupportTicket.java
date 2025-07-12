@@ -1,106 +1,79 @@
 package com.podStream.PodStream.Models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import org.hibernate.annotations.GenericGenerator;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidad que representa un ticket de soporte en PodStream.
+ * <p>Permite a los clientes reportar reclamos o inconvenientes relacionados con compras o servicios generales.
+ *
+ * @author Iván Andrés Castillo Iligaray
+ * @version 1.0.0
+ * @since 2025-07-10
+ */
 @Entity
+@Table(name = "support_tickets", indexes = {
+        @Index(name = "idx_support_ticket_title", columnList = "title"),
+        @Index(name = "idx_support_ticket_status", columnList = "status"),
+        @Index(name = "idx_support_ticket_active", columnList = "active")
+})
+@Data
+@EntityListeners(AuditingEntityListener.class)
 public class SupportTicket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    @GenericGenerator(name = "native", strategy = "native")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank(message = "El título no puede estar vacío")
+    @Size(max = 100, message = "El título no puede exceder 100 caracteres")
     private String title;
 
     @NotBlank(message = "La descripción no puede estar vacía")
+    @Size(max = 1000, message = "La descripción no puede exceder 1000 caracteres")
     private String description;
 
+    @NotNull(message = "El estado no puede ser nulo")
     @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus = OrderStatus.PROCESSING;
+    private OrderStatus status = OrderStatus.PROCESSING;
 
+    @NotNull(message = "El creador no puede ser nulo")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
-    private Client createdBy; // El usuario que creó el ticket de soporte
+    @JsonBackReference(value = "client-supportTicket")
+    private Client createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "purchase_order_id")
-    private PurchaseOrder purchaseOrder; // La orden de compra asociada (opcional)
+    @JsonBackReference(value = "purchaseOrder-supportTicket")
+    private PurchaseOrder purchaseOrder;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "supportTicket", cascade = CascadeType.ALL)
-    private List<OrderStatusHistory> history;
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    // Getters y setters...
+    @OneToMany(mappedBy = "supportTicket", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderStatusHistory> history = new ArrayList<>();
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public OrderStatus getOrderStatus() {
-        return orderStatus;
-    }
-
-    public void setOrderStatus(OrderStatus orderStatus) {
-        this.orderStatus = orderStatus;
-    }
-
-    public Client getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(Client createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public PurchaseOrder getPurchaseOrder() {
-        return purchaseOrder;
-    }
-
-    public void setPurchaseOrder(PurchaseOrder purchaseOrder) {
-        this.purchaseOrder = purchaseOrder;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public List<OrderStatusHistory> getHistory() {
-        return history;
-    }
-
-    public void setHistory(List<OrderStatusHistory> history) {
-        this.history = history;
-    }
+    @Column(name = "jira_issue_key")
+    private String jiraIssueKey;
 }

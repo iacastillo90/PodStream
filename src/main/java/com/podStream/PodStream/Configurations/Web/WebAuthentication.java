@@ -1,6 +1,6 @@
 package com.podStream.PodStream.Configurations.Web;
 
-import com.podStream.PodStream.Repositories.UserRepository;
+import com.podStream.PodStream.Repositories.Jpa.PersonRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -19,16 +19,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class WebAuthentication {
 
-    private final UserRepository userRepository;
+    private final PersonRepository personRepository;
     private static final Logger logger = LoggerFactory.getLogger(WebAuthentication.class);
 
     /**
      * Constructor que inyecta el repositorio de usuarios.
      *
-     * @param userRepository El repositorio para acceder a los datos de los usuarios.
+     * @param personRepository El repositorio para acceder a los datos de los usuarios.
      */
-    public WebAuthentication(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public WebAuthentication(PersonRepository personRepository) {
+        this.personRepository = personRepository;
     }
 
     /**
@@ -51,7 +51,7 @@ public class WebAuthentication {
     public UserDetailsService userDetailService() {
         return username -> {
             logger.info("Attempting to load user: {}", username);
-            return userRepository.findByUsername(username)
+            return personRepository.findByUsername(username)
                     .orElseThrow(() -> {
                         logger.warn("User not found: {}", username);
                         return new UsernameNotFoundException("User not found");

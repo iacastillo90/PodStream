@@ -1,15 +1,23 @@
 package com.podStream.PodStream.Models;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entidad que representa un ticket de monitoreo de fallos del sistema en PodStream.
+ */
 @Entity
+@Table(name = "monitoring_tickets")
+@Data
 public class MonitoringTicket {
 
     @Id
@@ -18,93 +26,47 @@ public class MonitoringTicket {
     private Long id;
 
     @NotBlank(message = "El título no puede estar vacío")
+    @Column(nullable = false)
     private String title;
 
     @NotBlank(message = "La descripción no puede estar vacía")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    @NotNull(message = "El estado del ticket es obligatorio")
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TicketStatus ticketStatus = TicketStatus.OPEN;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @NotBlank(message = "La fuente no puede estar vacía")
+    @Column(nullable = false)
+    private String source;
 
-    @OneToMany(mappedBy = "monitoringTicket", fetch = FetchType.LAZY)
+    @Column(name = "error_code")
+    private String errorCode;
+
+    @NotBlank(message = "La severidad no puede estar vacía")
+    @Column(nullable = false)
+    private String severity;
+
+    @Column(name = "jira_issue_id")
+    private String jiraIssueId;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "active")
+    private boolean active = true;
+
+    @OneToMany(mappedBy = "monitoringTicket", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TicketHistory> history = new ArrayList<>();
 
-    // Campos adicionales para monitoreo
-    private String source; // Por ejemplo, "Prometheus", "Logstash", "Application"
-    private String errorCode; // Código de error, si aplica
-    private String severity; // "LOW", "MEDIUM", "HIGH"
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public TicketStatus getTicketStatus() {
-        return ticketStatus;
-    }
-
-    public void setTicketStatus(TicketStatus ticketStatus) {
-        this.ticketStatus = ticketStatus;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public List<TicketHistory> getHistory() {
-        return history;
-    }
-
-    public void setHistory(List<TicketHistory> history) {
-        this.history = history;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(String errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public String getSeverity() {
-        return severity;
-    }
-
-    public void setSeverity(String severity) {
-        this.severity = severity;
+    public MonitoringTicket() {
+        this.createdAt = LocalDateTime.now();
     }
 }

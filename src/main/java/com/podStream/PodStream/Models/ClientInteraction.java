@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * <p>Almacena detalles como el tipo de interacción (vista, compra, etc.), el cliente y producto involucrados,
  * y metadatos como la sesión y la cantidad.
  *
- * @author [Tu Nombre o Equipo PodStream]
+ * @author PodStream
  * @since 0.0.1-SNAPSHOT
  */
 @Entity
@@ -29,12 +29,12 @@ public class ClientInteraction {
     @GenericGenerator(name = "native", strategy = "native")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "client_id", nullable = false)
     @NotNull(message = "El cliente es obligatorio")
     private Client client;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "product_id", nullable = false)
     @NotNull(message = "El producto es obligatorio")
     private Product product;
@@ -54,6 +54,9 @@ public class ClientInteraction {
     @Min(value = 0, message = "La cantidad no puede ser negativa")
     private Integer quantity;
 
+    @Column(name = "active")
+    private boolean active = true;
+
     public ClientInteraction() {
     }
 
@@ -63,6 +66,7 @@ public class ClientInteraction {
         this.interactionType = interactionType;
         this.sessionId = sessionId;
         this.quantity = quantity;
+        this.active = true;
     }
 
     // Getters y Setters
@@ -120,5 +124,13 @@ public class ClientInteraction {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

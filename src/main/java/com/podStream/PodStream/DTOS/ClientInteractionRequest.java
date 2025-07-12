@@ -16,7 +16,7 @@ import lombok.Data;
  * en una entidad {@link com.podStream.PodStream.Models.ClientInteraction} para su persistencia y
  * posterior procesamiento en eventos como {@link ClientInteractionEvent}.
  *
- * @author [Tu Nombre o Equipo PodStream]
+ * @author PodStream
  * @since 0.0.1-SNAPSHOT
  **/
 

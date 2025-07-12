@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.podStream.PodStream.Models.User.Client;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import org.hibernate.annotations.GenericGenerator;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,201 +16,77 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * La entidad PurchaseOrder representa una orden de compra realizada por un cliente.
- * Contiene la información relacionada con el monto, fecha, método de pago, y los productos comprados.
+ * Entidad que representa una orden de compra en PodStream.
+ * <p>Almacena información sobre la orden, incluyendo ticket, monto, método de pago, dirección, cliente, detalles, historial de estados y tickets de soporte.
+ *
+ * @author Iván Andrés Castillo Iligaray
+ * @version 1.1.0
+ * @since 2025-07-09
  */
 @Entity
+@Table(name = "purchase_orders", indexes = {
+        @Index(name = "idx_purchase_order_ticket", columnList = "ticket"),
+        @Index(name = "idx_purchase_order_status", columnList = "status"),
+        @Index(name = "idx_purchase_order_active", columnList = "active")
+})
+@Data
+@EntityListeners(AuditingEntityListener.class)
 public class PurchaseOrder {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
-    @GenericGenerator(name = "native", strategy = "native")
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    /**
-     * Número de ticket de la orden de compra.
-     */
     @NotBlank(message = "El ticket no puede estar vacío")
+    @Size(max = 36, message = "El ticket no puede exceder 36 caracteres")
+    @Column(unique = true)
     private String ticket;
 
-    /**
-     * Monto total de la orden de compra.
-     */
-    @Positive(message = "El monto debe ser mayor que 0")
+    @Positive(message = "El monto debe ser mayor a 0")
     private double amount;
 
-    /**
-     * Fecha y hora de la orden de compra.
-     */
-    @NotNull(message = "La fecha no puede ser nula")
-    private LocalDateTime date;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    /**
-     * Método de pago utilizado en la orden de compra.
-     */
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @NotNull(message = "El método de pago no puede ser nulo")
+    @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    /**
-     * Dirección de envío asociada a la orden de compra.
-     */
     @NotNull(message = "La dirección no puede ser nula")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
-    @JsonBackReference(value = "address-purchaseOrder") // Nombre único para la relación
+    @JsonBackReference(value = "address-purchaseOrder")
     private Address address;
 
-    /**
-     * Persona que realizó la compra.
-     */
-    @NotNull(message = "El usuario no puede ser nulo")
+    @NotNull(message = "El cliente no puede ser nulo")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_user")
-    @JsonBackReference(value = "user-purchaseOrder") // Nombre único para la relación
+    @JoinColumn(name = "client_id")
+    @JsonBackReference(value = "client-purchaseOrder")
     private Client client;
 
-    /**
-     * RUT del cliente para fines fiscales (SII).
-     */
     @NotBlank(message = "El RUT del cliente no puede estar vacío")
-    @Pattern(regexp = "\\d{1,2}\\.\\d{3}\\.\\d{3}-[0-9kK]", message = "RUT del cliente inválido")
+    @Pattern(regexp = "^\\d{1,2}\\.?\\d{3}\\.?\\d{3}-[0-9kK]$", message = "RUT del cliente inválido")
     private String customerRut;
 
-    /**
-     * Estado actual de la orden de compra.
-     */
+    @NotNull(message = "El estado no puede ser nulo")
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.PENDING_PAYMENT;
 
-    /**
-     * Relación uno a muchos con los detalles de los productos comprados.
-     */
     @NotEmpty(message = "La orden debe tener al menos un detalle")
-    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Details> details = new HashSet<>();
 
-    /**
-     * Relación uno a muchos con el historial de estados de la orden.
-     */
-    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 
-    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "purchaseOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SupportTicket> supportTickets = new HashSet<>();
 
-    /**
-     * Constructor vacío necesario para JPA.
-     */
-    public PurchaseOrder() { }
-
-    /**
-     * Constructor que permite crear una orden de compra con información básica.
-     *
-     * @param ticket Número de ticket de la orden.
-     * @param amount Monto total de la orden.
-     * @param date Fecha y hora de la orden.
-     * @param paymentMethod Método de pago utilizado.
-     * @param address Dirección de envío.
-     * @param client Persona que realizó la compra.
-     * @param customerRut RUT del cliente.
-     */
-    public PurchaseOrder(String ticket, double amount, LocalDateTime date, PaymentMethod paymentMethod, Address address, Client client, String customerRut) {
-        this.ticket = ticket;
-        this.amount = amount;
-        this.date = date;
-        this.paymentMethod = paymentMethod;
-        this.address = address;
-        this.client = client;
-        this.customerRut = customerRut;
-    }
-
-    // Getters y Setters
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getTicket() {
-        return ticket;
-    }
-
-    public void setTicket(String ticket) {
-        this.ticket = ticket;
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public Address getAddress() {
-        return address;
-    }
-
-    public void setAddress(Address adress) {
-        this.address = adress;
-    }
-
-    public Client getClient() {
-        return client;
-    }
-
-    public void setClient(Client client) {
-        this.client = client;
-    }
-
-    public String getCustomerRut() {
-        return customerRut;
-    }
-
-    public void setCustomerRut(String customerRut) {
-        this.customerRut = customerRut;
-    }
-
-    public OrderStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OrderStatus status) {
-        this.status = status;
-    }
-
-    public Set<Details> getDetails() {
-        return details;
-    }
-
-    public void setDetails(Set<Details> details) {
-        this.details = details;
-    }
-
-    public List<OrderStatusHistory> getStatusHistory() {
-        return statusHistory;
-    }
-
-    public void setStatusHistory(List<OrderStatusHistory> statusHistory) {
-        this.statusHistory = statusHistory;
-    }
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
 }

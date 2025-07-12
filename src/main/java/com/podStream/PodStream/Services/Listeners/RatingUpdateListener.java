@@ -6,7 +6,7 @@ import com.podStream.PodStream.Exception.RatingUpdateException;
 import com.podStream.PodStream.Models.ClientInteraction;
 import com.podStream.PodStream.Models.InteractionType;
 import com.podStream.PodStream.Models.ProductRating;
-import com.podStream.PodStream.Repositories.ProductRatingRepository;
+import com.podStream.PodStream.Repositories.Jpa.ProductRatingRepository;
 import com.podStream.PodStream.Services.Events.ClientInteractionEvent;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +68,7 @@ public class RatingUpdateListener {
         }
 
         // Inferir calificación basada en el tipo de interacción
-        double inferredRating = inferRatingFromInteraction(interaction);
+        Integer inferredRating = (int) inferRatingFromInteraction(interaction);
 
         // Buscar calificación existente
         Optional<ProductRating> existingRating = productRatingRepository.findByClientIdAndProductId(
@@ -80,7 +80,7 @@ public class RatingUpdateListener {
             // Actualizar solo si la nueva calificación es más alta
             if (inferredRating > productRating.getRating()) {
                 productRating.setRating(inferredRating);
-                productRating.setTimestamp(LocalDateTime.now());
+                productRating.setCreatedAt(LocalDateTime.now());
                 logger.debug("Calificación actualizada para cliente {} y producto {} a {}",
                         interaction.getClient().getId(), interaction.getProduct().getId(), inferredRating);
             } else {
@@ -93,7 +93,7 @@ public class RatingUpdateListener {
             productRating.setClient(interaction.getClient());
             productRating.setProduct(interaction.getProduct());
             productRating.setRating(inferredRating);
-            productRating.setTimestamp(LocalDateTime.now());
+            productRating.setCreatedAt(LocalDateTime.now());
             logger.debug("Nueva calificación creada para cliente {} y producto {} con valor {}",
                     interaction.getClient().getId(), interaction.getProduct().getId(), inferredRating);
         }
@@ -188,15 +188,10 @@ public class RatingUpdateListener {
         ProductRating productRating;
         if (existingRating.isPresent()) {
             productRating = existingRating.get();
-            productRating.setRating(rating);
+            productRating.setRating(rating.intValue());
             // No actualizamos el timestamp, ya que @CreatedDate lo gestiona
         } else {
-            productRating = new ProductRating(
-                    interaction.getClient(),
-                    interaction.getProduct(),
-                    rating,
-                    null // @CreatedDate lo inicializará
-            );
+            productRating = new ProductRating( );
         }
 
         productRatingRepository.save(productRating);
